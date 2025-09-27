@@ -1,0 +1,92 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "internal/domain/user/queries"
+    schema: "migrations"
+    gen:
+      go:
+        package: "models"
+        out: "internal/domain/user/models"
+        emit_json_tags: true
+        emit_interface: true
+  - engine: "postgresql"
+    queries: "internal/domain/counties/queries"
+    schema: "migrations"
+    gen:
+      go:
+        package: "models"
+        out: "internal/domain/counties/models"
+        emit_json_tags: true
+        emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/taxpayer/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/taxpayer/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/revenue/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/revenue/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/assessment/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/assessment/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/payment/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/payment/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/blockchain/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/blockchain/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/antifraud/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/antifraud/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/analytics/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/analytics/models"
+  #       emit_json_tags: true
+  #       emit_interface: true
+  # - engine: "postgresql"
+  #   queries: "internal/domains/configdomain/queries"
+  #   schema: "migrations"
+  #   gen:
+  #     go:
+  #       package: "models"
+  #       out: "internal/domains/configdomain/models"
+  #       emit_json_tags: true
+  #       emit_interface: true

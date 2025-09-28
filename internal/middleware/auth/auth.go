@@ -44,11 +44,17 @@ func (s AuthService) Login(ctx context.Context, req LoginRequest) (LoginResponse
 		return LoginResponse{}, errors.New("invalid credentials")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	claims := jwt.MapClaims{
 		"user_id": user.ID,
 		"role":    user.Role,
 		"exp":     time.Now().Add(time.Hour * 24).Unix(),
-	})
+	}
+
+	if user.CountyID.Valid {
+		claims["county_id"] = user.CountyID.Int32
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(s.secretKey)
 	if err != nil {
@@ -87,7 +93,6 @@ func (s AuthService) Register(ctx context.Context, req RegisterRequest) (models.
 		return models.User{}, errors.New("invalid role")
 	}
 
-	// Super admin doesn't need county_id, others do
 	if req.Role != "super_admin" && req.CountyID == nil {
 		return models.User{}, errors.New("county_id is required for non-super-admin roles")
 	}

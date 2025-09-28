@@ -16,6 +16,7 @@ type Querier interface {
 	GetUserByUsername(ctx context.Context, username string) (User, error)
 	// Return the created user
 	InsertUser(ctx context.Context, arg InsertUserParams) (User, error)
+	ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]ListAllUsersRow, error)
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUsersRow, error)
 	UpdateUser(ctx context.Context, arg UpdateUserParams) error
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error

@@ -151,6 +151,73 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 	return i, err
 }
 
+const listAllUsers = `-- name: ListAllUsers :many
+SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+FROM users
+ORDER BY username ASC
+LIMIT $1 OFFSET $2
+`
+
+type ListAllUsersParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListAllUsersRow struct {
+	ID          uuid.UUID      `json:"id"`
+	CountyID    sql.NullInt32  `json:"county_id"`
+	Username    string         `json:"username"`
+	Email       string         `json:"email"`
+	FirstName   string         `json:"first_name"`
+	LastName    string         `json:"last_name"`
+	PhoneNumber sql.NullString `json:"phone_number"`
+	Role        string         `json:"role"`
+	EmployeeID  sql.NullString `json:"employee_id"`
+	Department  sql.NullString `json:"department"`
+	IsActive    sql.NullBool   `json:"is_active"`
+	LastLogin   sql.NullTime   `json:"last_login"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]ListAllUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, listAllUsers, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListAllUsersRow
+	for rows.Next() {
+		var i ListAllUsersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.CountyID,
+			&i.Username,
+			&i.Email,
+			&i.FirstName,
+			&i.LastName,
+			&i.PhoneNumber,
+			&i.Role,
+			&i.EmployeeID,
+			&i.Department,
+			&i.IsActive,
+			&i.LastLogin,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listUsers = `-- name: ListUsers :many
 SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
 FROM users

@@ -22,7 +22,6 @@ func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models
 		return models.User{}, errors.New("required fields missing")
 	}
 
-	// Validate role
 	validRoles := map[string]bool{
 		"super_admin":     true,
 		"county_admin":    true,
@@ -34,7 +33,6 @@ func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models
 		return models.User{}, errors.New("invalid role")
 	}
 
-	// Super admin doesn't need county_id, others do
 	if req.Role != "super_admin" && req.CountyID == nil {
 		return models.User{}, errors.New("county_id is required for non-super-admin roles")
 	}
@@ -64,6 +62,23 @@ func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models
 	}
 
 	return s.repo.CreateUser(ctx, params)
+}
+
+func (s *Service) ListUsers(ctx context.Context, userRole string, userCountyID *int32, limit, offset int32) (interface{}, error) {
+
+	if userRole == "super_admin" {
+		return s.repo.ListAllUsers(ctx, models.ListAllUsersParams{Limit: limit, Offset: offset})
+	}
+
+	if userCountyID == nil {
+		return nil, errors.New("county_id is required for non-super-admin roles")
+	}
+
+	return s.repo.ListUsers(ctx, models.ListUsersParams{
+		CountyID: sql.NullInt32{Int32: *userCountyID, Valid: true},
+		Limit:    limit,
+		Offset:   offset,
+	})
 }
 
 type CreateUserRequest struct {

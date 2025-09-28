@@ -9,6 +9,8 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, user models.InsertUserParams) (models.User, error)
 	GetUserByUsername(ctx context.Context, username string) (models.User, error)
+	ListUsers(ctx context.Context, params models.ListUsersParams) ([]models.ListUsersRow, error)
+	ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error)
 }
 
 type repository struct {
@@ -25,4 +27,12 @@ func (r *repository) CreateUser(ctx context.Context, user models.InsertUserParam
 
 func (r *repository) GetUserByUsername(ctx context.Context, username string) (models.User, error) {
 	return r.q.GetUserByUsername(ctx, username)
+}
+
+func (r *repository) ListUsers(ctx context.Context, params models.ListUsersParams) ([]models.ListUsersRow, error) {
+	return r.q.ListUsers(ctx, params)
+}
+
+func (r *repository) ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error) {
+	return r.q.ListAllUsers(ctx, params)
 }

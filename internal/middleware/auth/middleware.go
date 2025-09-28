@@ -11,8 +11,9 @@ import (
 
 type contextKey string
 
-const userIDKey contextKey = "user_id"
-const userRoleKey contextKey = "user_role"
+const UserIDKey contextKey = "user_id"
+const UserRoleKey contextKey = "user_role"
+const UserCountyIDKey contextKey = "user_county_id"
 
 func JWTAuth(secretKey string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -61,8 +62,14 @@ func JWTAuth(secretKey string) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), userIDKey, userID)
-			ctx = context.WithValue(ctx, userRoleKey, role)
+			ctx := context.WithValue(r.Context(), UserIDKey, userID)
+			ctx = context.WithValue(ctx, UserRoleKey, role)
+
+			if countyIDFloat, exists := claims["county_id"]; exists {
+				if countyID, ok := countyIDFloat.(float64); ok {
+					ctx = context.WithValue(ctx, UserCountyIDKey, int32(countyID))
+				}
+			}
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

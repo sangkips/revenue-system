@@ -21,6 +21,12 @@ WHERE county_id = @county_id
 ORDER BY username ASC
 LIMIT $1 OFFSET $2;
 
+-- name: ListAllUsers :many
+SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+FROM users
+ORDER BY username ASC
+LIMIT $1 OFFSET $2;
+
 -- name: UpdateUser :exec
 UPDATE users
 SET email = @email, first_name = @first_name, last_name = @last_name, phone_number = @phone_number, role = @role, employee_id = @employee_id, department = @department, is_active = @is_active, updated_at = CURRENT_TIMESTAMP

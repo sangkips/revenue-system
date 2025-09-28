@@ -17,9 +17,9 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) error {
+func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models.User, error) {
 	if req.Username == "" || req.Email == "" || req.Password == "" || req.Role == "" {
-		return errors.New("required fields missing")
+		return models.User{}, errors.New("required fields missing")
 	}
 
 	// Validate role
@@ -31,17 +31,17 @@ func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) error {
 		"auditor":         true,
 	}
 	if !validRoles[req.Role] {
-		return errors.New("invalid role")
+		return models.User{}, errors.New("invalid role")
 	}
 
 	// Super admin doesn't need county_id, others do
 	if req.Role != "super_admin" && req.CountyID == nil {
-		return errors.New("county_id is required for non-super-admin roles")
+		return models.User{}, errors.New("county_id is required for non-super-admin roles")
 	}
 
 	hashedPsswd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return models.User{}, err
 	}
 
 	var countyID sql.NullInt32

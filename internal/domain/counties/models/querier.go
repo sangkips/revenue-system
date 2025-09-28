@@ -11,7 +11,7 @@ import (
 type Querier interface {
 	DeleteCounty(ctx context.Context, id int32) error
 	GetCountyByID(ctx context.Context, id int32) (County, error)
-	InsertCounty(ctx context.Context, arg InsertCountyParams) error
+	InsertCounty(ctx context.Context, arg InsertCountyParams) (County, error)
 	ListCounties(ctx context.Context, arg ListCountiesParams) ([]County, error)
 	UpdateCounty(ctx context.Context, arg UpdateCountyParams) error
 }

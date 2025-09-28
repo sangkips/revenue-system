@@ -18,7 +18,7 @@ type AuthService struct {
 
 type Repository interface {
 	GetUserByUsername(ctx context.Context, username string) (models.User, error)
-	CreateUser(ctx context.Context, user models.InsertUserParams) error
+	CreateUser(ctx context.Context, user models.InsertUserParams) (models.User, error)
 }
 
 func NewAuthService(repo Repository, secretKey string) *AuthService {
@@ -70,9 +70,9 @@ type RegisterRequest struct {
 	Department  string `json:"department"`
 }
 
-func (s AuthService) Register(ctx context.Context, req RegisterRequest) error {
+func (s AuthService) Register(ctx context.Context, req RegisterRequest) (models.User, error) {
 	if req.Username == "" || req.Email == "" || req.Password == "" || req.Role == "" {
-		return errors.New("required fields missing")
+		return models.User{}, errors.New("required fields missing")
 	}
 
 	// Validate role
@@ -84,17 +84,17 @@ func (s AuthService) Register(ctx context.Context, req RegisterRequest) error {
 		"auditor":         true,
 	}
 	if !validRoles[req.Role] {
-		return errors.New("invalid role")
+		return models.User{}, errors.New("invalid role")
 	}
 
 	// Super admin doesn't need county_id, others do
 	if req.Role != "super_admin" && req.CountyID == nil {
-		return errors.New("county_id is required for non-super-admin roles")
+		return models.User{}, errors.New("county_id is required for non-super-admin roles")
 	}
 
 	hashedPsswd, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return models.User{}, err
 	}
 
 	var countyID sql.NullInt32
@@ -115,5 +115,9 @@ func (s AuthService) Register(ctx context.Context, req RegisterRequest) error {
 		Department:   sql.NullString{String: req.Department, Valid: req.Department != ""},
 		IsActive:     sql.NullBool{Bool: true, Valid: true},
 	}
-	return s.repo.CreateUser(ctx, params)
+	user, err := s.repo.CreateUser(ctx, params)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
 }

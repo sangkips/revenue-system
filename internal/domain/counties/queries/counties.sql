@@ -1,6 +1,7 @@
--- name: InsertCounty :exec
+-- name: InsertCounty :one
 INSERT INTO counties (name, code, treasury_account)
-VALUES (@name, @code, @treasury_account);
+VALUES (@name, @code, @treasury_account)
+RETURNING id, name, code, treasury_account, created_at, updated_at;
 
 -- name: GetCountyByID :one
 SELECT id, name, code, treasury_account, created_at, updated_at

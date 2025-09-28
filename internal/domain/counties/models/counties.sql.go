@@ -39,9 +39,10 @@ func (q *Queries) GetCountyByID(ctx context.Context, id int32) (County, error) {
 	return i, err
 }
 
-const insertCounty = `-- name: InsertCounty :exec
+const insertCounty = `-- name: InsertCounty :one
 INSERT INTO counties (name, code, treasury_account)
 VALUES ($1, $2, $3)
+RETURNING id, name, code, treasury_account, created_at, updated_at
 `
 
 type InsertCountyParams struct {
@@ -50,9 +51,18 @@ type InsertCountyParams struct {
 	TreasuryAccount sql.NullString `json:"treasury_account"`
 }
 
-func (q *Queries) InsertCounty(ctx context.Context, arg InsertCountyParams) error {
-	_, err := q.db.ExecContext(ctx, insertCounty, arg.Name, arg.Code, arg.TreasuryAccount)
-	return err
+func (q *Queries) InsertCounty(ctx context.Context, arg InsertCountyParams) (County, error) {
+	row := q.db.QueryRowContext(ctx, insertCounty, arg.Name, arg.Code, arg.TreasuryAccount)
+	var i County
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Code,
+		&i.TreasuryAccount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const listCounties = `-- name: ListCounties :many

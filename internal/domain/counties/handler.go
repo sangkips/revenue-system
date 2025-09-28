@@ -32,11 +32,14 @@ func (h *Handler) CreateCounty(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	if err := h.svc.CreateCounty(ctx, req); err != nil {
+	county, err := h.svc.CreateCounty(ctx, req)
+	if err != nil {
 		log.Error().Err(err).Msg("Failed to create county")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusAccepted)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(county)
 }

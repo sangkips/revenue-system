@@ -1,6 +1,8 @@
--- name: InsertUser :exec
+-- Return the created user
+-- name: InsertUser :one
 INSERT INTO users (id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active)
-VALUES (uuid_generate_v4(), @county_id, @username, @email, @password_hash, @first_name, @last_name, @phone_number, @role, @employee_id, @department, @is_active);
+VALUES (uuid_generate_v4(), @county_id, @username, @email, @password_hash, @first_name, @last_name, @phone_number, @role, @employee_id, @department, @is_active)
+RETURNING id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at;
 
 -- name: GetUserByID :one
 SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at

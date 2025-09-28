@@ -16,9 +16,9 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
-func (s *Service) CreateCounty(ctx context.Context, req CreateCountyRequest) error {
+func (s *Service) CreateCounty(ctx context.Context, req CreateCountyRequest) (models.County, error) {
 	if req.Name == "" || req.Code == "" {
-		return errors.New("name and code are required")
+		return models.County{}, errors.New("name and code are required")
 	}
 
 	params := models.InsertCountyParams{

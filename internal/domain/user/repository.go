@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	CreateUser(ctx context.Context, user models.InsertUserParams) error
+	CreateUser(ctx context.Context, user models.InsertUserParams) (models.User, error)
 	GetUserByUsername(ctx context.Context, username string) (models.User, error)
 }
 
@@ -19,7 +19,7 @@ func NewRepository(db models.DBTX) Repository {
 	return &repository{q: models.New(db)}
 }
 
-func (r *repository) CreateUser(ctx context.Context, user models.InsertUserParams) error {
+func (r *repository) CreateUser(ctx context.Context, user models.InsertUserParams) (models.User, error) {
 	return r.q.InsertUser(ctx, user)
 }
 

@@ -64,13 +64,33 @@ func main() {
 				return
 			}
 
-			if err := authService.Register(r.Context(), req); err != nil {
+			user, err := authService.Register(r.Context(), req)
+			if err != nil {
 				log.Error().Err(err).Msg("Failed to register user")
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			w.WriteHeader(http.StatusAccepted)
+			type UserResponse struct {
+				ID        string `json:"id"`
+				Username  string `json:"username"`
+				Email     string `json:"email"`
+				FirstName string `json:"first_name"`
+				LastName  string `json:"last_name"`
+				Role      string `json:"role"`
+			}
+			resp := UserResponse{
+				ID:        user.ID.String(),
+				Username:  user.Username,
+				Email:     user.Email,
+				FirstName: user.FirstName,
+				LastName:  user.LastName,
+				Role:      user.Role,
+			}
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(resp)
 		})
 	})
 

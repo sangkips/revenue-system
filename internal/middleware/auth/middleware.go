@@ -23,12 +23,12 @@ func JWTAuth(secretKey string) func(http.Handler) http.Handler {
 				return
 			}
 
-			if !strings.HasPrefix(authHeader, "Bearer") {
+			if !strings.HasPrefix(authHeader, "Bearer ") {
 				http.Error(w, "Invalid Authorization header", http.StatusUnauthorized)
 				return
 			}
 
-			tokenString := strings.TrimPrefix(authHeader, "Bearer")
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 			token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {

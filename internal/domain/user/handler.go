@@ -39,11 +39,14 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	if err := h.svc.CreateUser(ctx, req); err != nil {
+	user, err := h.svc.CreateUser(ctx, req)
+	if err != nil {
 		log.Error().Err(err).Msg("Failed to create user")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusAccepted)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
 }

@@ -95,9 +95,10 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	return i, err
 }
 
-const insertUser = `-- name: InsertUser :exec
+const insertUser = `-- name: InsertUser :one
 INSERT INTO users (id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active)
 VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+RETURNING id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
 `
 
 type InsertUserParams struct {
@@ -114,8 +115,9 @@ type InsertUserParams struct {
 	IsActive     sql.NullBool   `json:"is_active"`
 }
 
-func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
-	_, err := q.db.ExecContext(ctx, insertUser,
+// Return the created user
+func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, insertUser,
 		arg.CountyID,
 		arg.Username,
 		arg.Email,
@@ -128,7 +130,25 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) error {
 		arg.Department,
 		arg.IsActive,
 	)
-	return err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CountyID,
+		&i.Username,
+		&i.Email,
+		&i.PasswordHash,
+		&i.FirstName,
+		&i.LastName,
+		&i.PhoneNumber,
+		&i.Role,
+		&i.EmployeeID,
+		&i.Department,
+		&i.IsActive,
+		&i.LastLogin,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const listUsers = `-- name: ListUsers :many

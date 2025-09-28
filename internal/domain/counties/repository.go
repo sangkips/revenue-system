@@ -7,7 +7,7 @@ import (
 )
 
 type Repository interface {
-	CreateCounty(ctx context.Context, county models.InsertCountyParams) error
+	CreateCounty(ctx context.Context, county models.InsertCountyParams) (models.County, error)
 }
 
 type repository struct {
@@ -18,6 +18,6 @@ func NewRepository(db models.DBTX) Repository {
 	return &repository{q: models.New(db)}
 }
 
-func (r *repository) CreateCounty(ctx context.Context, county models.InsertCountyParams) error {
+func (r *repository) CreateCounty(ctx context.Context, county models.InsertCountyParams) (models.County, error) {
 	return r.q.InsertCounty(ctx, county)
 }

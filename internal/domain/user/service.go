@@ -81,6 +81,10 @@ func (s *Service) ListUsers(ctx context.Context, userRole string, userCountyID *
 	})
 }
 
+func (s *Service) GetUser(ctx context.Context, id string) (models.GetUserByIDRow, error) {
+	return s.repo.GetUserByID(ctx, id)
+}
+
 type CreateUserRequest struct {
 	CountyID    *int32 `json:"county_id,omitempty"`
 	Username    string `json:"username"`

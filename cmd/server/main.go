@@ -73,7 +73,6 @@ func main() {
 
 			type UserResponse struct {
 				ID        string `json:"id"`
-				Username  string `json:"username"`
 				Email     string `json:"email"`
 				FirstName string `json:"first_name"`
 				LastName  string `json:"last_name"`
@@ -81,7 +80,6 @@ func main() {
 			}
 			resp := UserResponse{
 				ID:        user.ID.String(),
-				Username:  user.Username,
 				Email:     user.Email,
 				FirstName: user.FirstName,
 				LastName:  user.LastName,

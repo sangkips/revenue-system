@@ -9,7 +9,7 @@ import (
 
 type Repository interface {
 	CreateUser(ctx context.Context, user models.InsertUserParams) (models.User, error)
-	GetUserByUsername(ctx context.Context, username string) (models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 	ListUsers(ctx context.Context, params models.ListUsersParams) ([]models.ListUsersRow, error)
 	ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error)
 	GetUserByID(ctx context.Context, id string) (models.GetUserByIDRow, error)
@@ -29,8 +29,8 @@ func (r *repository) CreateUser(ctx context.Context, user models.InsertUserParam
 	return r.q.InsertUser(ctx, user)
 }
 
-func (r *repository) GetUserByUsername(ctx context.Context, username string) (models.User, error) {
-	return r.q.GetUserByUsername(ctx, username)
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	return r.q.GetUserByEmail(ctx, email)
 }
 
 func (r *repository) ListUsers(ctx context.Context, params models.ListUsersParams) ([]models.ListUsersRow, error) {

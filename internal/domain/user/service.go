@@ -19,7 +19,7 @@ func NewService(repo Repository) *Service {
 }
 
 func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models.User, error) {
-	if req.Username == "" || req.Email == "" || req.Password == "" || req.Role == "" {
+	if req.Email == "" || req.Password == "" || req.Role == "" {
 		return models.User{}, errors.New("required fields missing")
 	}
 
@@ -50,7 +50,6 @@ func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models
 
 	params := models.InsertUserParams{
 		CountyID:     countyID,
-		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: string(hashedPsswd),
 		FirstName:    req.FirstName,
@@ -145,7 +144,6 @@ func(s *Service) DeleteUser(ctx context.Context, id string) error {
 
 type CreateUserRequest struct {
 	CountyID    *int32 `json:"county_id,omitempty"`
-	Username    string `json:"username"`
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 	FirstName   string `json:"first_name"`
@@ -154,6 +152,16 @@ type CreateUserRequest struct {
 	Role        string `json:"role"`
 	EmployeeID  string `json:"employee_id"`
 	Department  string `json:"department"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	User  models.User `json:"user"`
+	Token string      `json:"token"`
 }
 
 type UpdateUserRequest struct {

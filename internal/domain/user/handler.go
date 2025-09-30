@@ -19,7 +19,6 @@ type Handler struct {
 type UserResponse struct {
 	ID          string  `json:"id"`
 	CountyID    *int32  `json:"county_id"`
-	Username    string  `json:"username"`
 	Email       string  `json:"email"`
 	FirstName   string  `json:"first_name"`
 	LastName    string  `json:"last_name"`
@@ -141,7 +140,6 @@ func (h Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 func convertListUsersRowToResponse(user models.ListUsersRow) UserResponse {
 	response := UserResponse{
 		ID:        user.ID.String(),
-		Username:  user.Username,
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -184,7 +182,6 @@ func convertListUsersRowToResponse(user models.ListUsersRow) UserResponse {
 func convertGetUserByIDRowToResponse(user models.GetUserByIDRow) UserResponse {
 	response := UserResponse{
 		ID:        user.ID.String(),
-		Username:  user.Username,
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,
@@ -227,7 +224,6 @@ func convertGetUserByIDRowToResponse(user models.GetUserByIDRow) UserResponse {
 func convertListAllUsersRowToResponse(user models.ListAllUsersRow) UserResponse {
 	response := UserResponse{
 		ID:        user.ID.String(),
-		Username:  user.Username,
 		Email:     user.Email,
 		FirstName: user.FirstName,
 		LastName:  user.LastName,

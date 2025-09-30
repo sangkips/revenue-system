@@ -21,8 +21,36 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT id, county_id, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+FROM users
+WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CountyID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.FirstName,
+		&i.LastName,
+		&i.PhoneNumber,
+		&i.Role,
+		&i.EmployeeID,
+		&i.Department,
+		&i.IsActive,
+		&i.LastLogin,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+SELECT id, county_id, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
 FROM users
 WHERE id = $1
 `
@@ -30,7 +58,6 @@ WHERE id = $1
 type GetUserByIDRow struct {
 	ID          uuid.UUID      `json:"id"`
 	CountyID    sql.NullInt32  `json:"county_id"`
-	Username    string         `json:"username"`
 	Email       string         `json:"email"`
 	FirstName   string         `json:"first_name"`
 	LastName    string         `json:"last_name"`
@@ -50,37 +77,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id uuid.UUID) (GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.CountyID,
-		&i.Username,
 		&i.Email,
-		&i.FirstName,
-		&i.LastName,
-		&i.PhoneNumber,
-		&i.Role,
-		&i.EmployeeID,
-		&i.Department,
-		&i.IsActive,
-		&i.LastLogin,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
-const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
-FROM users
-WHERE username = $1
-`
-
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.CountyID,
-		&i.Username,
-		&i.Email,
-		&i.PasswordHash,
 		&i.FirstName,
 		&i.LastName,
 		&i.PhoneNumber,
@@ -96,14 +93,13 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 }
 
 const insertUser = `-- name: InsertUser :one
-INSERT INTO users (id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active)
-VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id, county_id, username, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+INSERT INTO users (id, county_id, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active)
+VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+RETURNING id, county_id, email, password_hash, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
 `
 
 type InsertUserParams struct {
 	CountyID     sql.NullInt32  `json:"county_id"`
-	Username     string         `json:"username"`
 	Email        string         `json:"email"`
 	PasswordHash string         `json:"password_hash"`
 	FirstName    string         `json:"first_name"`
@@ -119,7 +115,6 @@ type InsertUserParams struct {
 func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, insertUser,
 		arg.CountyID,
-		arg.Username,
 		arg.Email,
 		arg.PasswordHash,
 		arg.FirstName,
@@ -134,7 +129,6 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 	err := row.Scan(
 		&i.ID,
 		&i.CountyID,
-		&i.Username,
 		&i.Email,
 		&i.PasswordHash,
 		&i.FirstName,
@@ -152,9 +146,9 @@ func (q *Queries) InsertUser(ctx context.Context, arg InsertUserParams) (User, e
 }
 
 const listAllUsers = `-- name: ListAllUsers :many
-SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+SELECT id, county_id, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
 FROM users
-ORDER BY username ASC
+ORDER BY email ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -166,7 +160,6 @@ type ListAllUsersParams struct {
 type ListAllUsersRow struct {
 	ID          uuid.UUID      `json:"id"`
 	CountyID    sql.NullInt32  `json:"county_id"`
-	Username    string         `json:"username"`
 	Email       string         `json:"email"`
 	FirstName   string         `json:"first_name"`
 	LastName    string         `json:"last_name"`
@@ -192,7 +185,6 @@ func (q *Queries) ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]L
 		if err := rows.Scan(
 			&i.ID,
 			&i.CountyID,
-			&i.Username,
 			&i.Email,
 			&i.FirstName,
 			&i.LastName,
@@ -219,10 +211,10 @@ func (q *Queries) ListAllUsers(ctx context.Context, arg ListAllUsersParams) ([]L
 }
 
 const listUsers = `-- name: ListUsers :many
-SELECT id, county_id, username, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
+SELECT id, county_id, email, first_name, last_name, phone_number, role, employee_id, department, is_active, last_login, created_at, updated_at
 FROM users
 WHERE county_id = $3
-ORDER BY username ASC
+ORDER BY email ASC
 LIMIT $1 OFFSET $2
 `
 
@@ -235,7 +227,6 @@ type ListUsersParams struct {
 type ListUsersRow struct {
 	ID          uuid.UUID      `json:"id"`
 	CountyID    sql.NullInt32  `json:"county_id"`
-	Username    string         `json:"username"`
 	Email       string         `json:"email"`
 	FirstName   string         `json:"first_name"`
 	LastName    string         `json:"last_name"`
@@ -261,7 +252,6 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 		if err := rows.Scan(
 			&i.ID,
 			&i.CountyID,
-			&i.Username,
 			&i.Email,
 			&i.FirstName,
 			&i.LastName,

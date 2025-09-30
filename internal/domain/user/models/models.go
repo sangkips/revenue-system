@@ -22,7 +22,6 @@ type County struct {
 type User struct {
 	ID           uuid.UUID      `json:"id"`
 	CountyID     sql.NullInt32  `json:"county_id"`
-	Username     string         `json:"username"`
 	Email        string         `json:"email"`
 	PasswordHash string         `json:"password_hash"`
 	FirstName    string         `json:"first_name"`

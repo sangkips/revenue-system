@@ -17,7 +17,7 @@ type AuthService struct {
 }
 
 type Repository interface {
-	GetUserByUsername(ctx context.Context, username string) (models.User, error)
+	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 	CreateUser(ctx context.Context, user models.InsertUserParams) (models.User, error)
 }
 
@@ -26,7 +26,7 @@ func NewAuthService(repo Repository, secretKey string) *AuthService {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -35,7 +35,7 @@ type LoginResponse struct {
 }
 
 func (s AuthService) Login(ctx context.Context, req LoginRequest) (LoginResponse, error) {
-	user, err := s.repo.GetUserByUsername(ctx, req.Username)
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return LoginResponse{}, errors.New("user not found")
 	}
@@ -65,7 +65,6 @@ func (s AuthService) Login(ctx context.Context, req LoginRequest) (LoginResponse
 
 type RegisterRequest struct {
 	CountyID    *int32 `json:"county_id,omitempty"`
-	Username    string `json:"username"`
 	Email       string `json:"email"`
 	Password    string `json:"password"`
 	FirstName   string `json:"first_name"`
@@ -77,7 +76,7 @@ type RegisterRequest struct {
 }
 
 func (s AuthService) Register(ctx context.Context, req RegisterRequest) (models.User, error) {
-	if req.Username == "" || req.Email == "" || req.Password == "" || req.Role == "" {
+	if req.Email == "" || req.Password == "" || req.Role == "" {
 		return models.User{}, errors.New("required fields missing")
 	}
 
@@ -109,7 +108,6 @@ func (s AuthService) Register(ctx context.Context, req RegisterRequest) (models.
 
 	params := models.InsertUserParams{
 		CountyID:     countyID,
-		Username:     req.Username,
 		Email:        req.Email,
 		PasswordHash: string(hashedPsswd),
 		FirstName:    req.FirstName,

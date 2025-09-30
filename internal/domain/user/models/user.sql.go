@@ -289,31 +289,56 @@ func (q *Queries) ListUsers(ctx context.Context, arg ListUsersParams) ([]ListUse
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-SET email = $1, first_name = $2, last_name = $3, phone_number = $4, role = $5, employee_id = $6, department = $7, is_active = $8, updated_at = CURRENT_TIMESTAMP
-WHERE id = $9
+SET
+  email = CASE WHEN $1::boolean THEN $2 ELSE email END,
+  first_name = CASE WHEN $3::boolean THEN $4 ELSE first_name END,
+  last_name = CASE WHEN $5::boolean THEN $6 ELSE last_name END,
+  phone_number = CASE WHEN $7::boolean THEN $8 ELSE phone_number END,
+  role = CASE WHEN $9::boolean THEN $10 ELSE role END,
+  employee_id = CASE WHEN $11::boolean THEN $12 ELSE employee_id END,
+  department = CASE WHEN $13::boolean THEN $14 ELSE department END,
+  is_active = CASE WHEN $15::boolean THEN $16 ELSE is_active END,
+  updated_at = CURRENT_TIMESTAMP
+WHERE id = $17
 `
 
 type UpdateUserParams struct {
-	Email       string         `json:"email"`
-	FirstName   string         `json:"first_name"`
-	LastName    string         `json:"last_name"`
-	PhoneNumber sql.NullString `json:"phone_number"`
-	Role        string         `json:"role"`
-	EmployeeID  sql.NullString `json:"employee_id"`
-	Department  sql.NullString `json:"department"`
-	IsActive    sql.NullBool   `json:"is_active"`
-	ID          uuid.UUID      `json:"id"`
+	UpdateEmail       bool           `json:"update_email"`
+	Email             string         `json:"email"`
+	UpdateFirstName   bool           `json:"update_first_name"`
+	FirstName         string         `json:"first_name"`
+	UpdateLastName    bool           `json:"update_last_name"`
+	LastName          string         `json:"last_name"`
+	UpdatePhoneNumber bool           `json:"update_phone_number"`
+	PhoneNumber       sql.NullString `json:"phone_number"`
+	UpdateRole        bool           `json:"update_role"`
+	Role              string         `json:"role"`
+	UpdateEmployeeID  bool           `json:"update_employee_id"`
+	EmployeeID        sql.NullString `json:"employee_id"`
+	UpdateDepartment  bool           `json:"update_department"`
+	Department        sql.NullString `json:"department"`
+	UpdateIsActive    bool           `json:"update_is_active"`
+	IsActive          sql.NullBool   `json:"is_active"`
+	ID                uuid.UUID      `json:"id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.ExecContext(ctx, updateUser,
+		arg.UpdateEmail,
 		arg.Email,
+		arg.UpdateFirstName,
 		arg.FirstName,
+		arg.UpdateLastName,
 		arg.LastName,
+		arg.UpdatePhoneNumber,
 		arg.PhoneNumber,
+		arg.UpdateRole,
 		arg.Role,
+		arg.UpdateEmployeeID,
 		arg.EmployeeID,
+		arg.UpdateDepartment,
 		arg.Department,
+		arg.UpdateIsActive,
 		arg.IsActive,
 		arg.ID,
 	)

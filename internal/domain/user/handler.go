@@ -43,8 +43,7 @@ func (h Handler) RegisterUserRoutes(r chi.Router) {
 	r.Post("/", h.CreateUser)
 	r.Get("/{id}", h.GetUser)
 	r.Get("/", h.ListUsers)
-	// r.Put("/{id}", h.UpdateUser)
-	// r.Put("/{id}/password", h.UpdatePassword)
+	r.Patch("/{id}", h.UpdateUser)
 	// r.Delete("/{id}", h.DeleteUser)
 }
 
@@ -265,4 +264,26 @@ func convertListAllUsersRowToResponse(user models.ListAllUsersRow) UserResponse 
 	}
 
 	return response
+}
+
+
+func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req UpdateUserRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	ctx := r.Context()
+
+	if err := h.svc.UpdateUser(ctx,id, req); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+
 }

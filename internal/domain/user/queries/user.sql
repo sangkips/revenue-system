@@ -29,7 +29,16 @@ LIMIT $1 OFFSET $2;
 
 -- name: UpdateUser :exec
 UPDATE users
-SET email = @email, first_name = @first_name, last_name = @last_name, phone_number = @phone_number, role = @role, employee_id = @employee_id, department = @department, is_active = @is_active, updated_at = CURRENT_TIMESTAMP
+SET
+  email = CASE WHEN @update_email::boolean THEN @email ELSE email END,
+  first_name = CASE WHEN @update_first_name::boolean THEN @first_name ELSE first_name END,
+  last_name = CASE WHEN @update_last_name::boolean THEN @last_name ELSE last_name END,
+  phone_number = CASE WHEN @update_phone_number::boolean THEN @phone_number ELSE phone_number END,
+  role = CASE WHEN @update_role::boolean THEN @role ELSE role END,
+  employee_id = CASE WHEN @update_employee_id::boolean THEN @employee_id ELSE employee_id END,
+  department = CASE WHEN @update_department::boolean THEN @department ELSE department END,
+  is_active = CASE WHEN @update_is_active::boolean THEN @is_active ELSE is_active END,
+  updated_at = CURRENT_TIMESTAMP
 WHERE id = @id;
 
 -- name: UpdateUserPassword :exec

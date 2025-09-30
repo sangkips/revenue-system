@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/sangkips/revenue-system/internal/domain/user/models"
 )
 
@@ -11,6 +12,7 @@ type Repository interface {
 	GetUserByUsername(ctx context.Context, username string) (models.User, error)
 	ListUsers(ctx context.Context, params models.ListUsersParams) ([]models.ListUsersRow, error)
 	ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error)
+	GetUserByID(ctx context.Context, id string) (models.GetUserByIDRow, error)
 }
 
 type repository struct {
@@ -35,4 +37,12 @@ func (r *repository) ListUsers(ctx context.Context, params models.ListUsersParam
 
 func (r *repository) ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error) {
 	return r.q.ListAllUsers(ctx, params)
+}
+
+func (r *repository) GetUserByID(ctx context.Context, id string) (models.GetUserByIDRow, error) {
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return models.GetUserByIDRow{}, err
+	}
+	return r.q.GetUserByID(ctx, parsedID)
 }

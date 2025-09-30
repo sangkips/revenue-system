@@ -41,7 +41,7 @@ func NewHandler(db models.DBTX) *Handler {
 
 func (h Handler) RegisterUserRoutes(r chi.Router) {
 	r.Post("/", h.CreateUser)
-	// r.Get("/{id}", h.GetUser)
+	r.Get("/{id}", h.GetUser)
 	r.Get("/", h.ListUsers)
 	// r.Put("/{id}", h.UpdateUser)
 	// r.Put("/{id}/password", h.UpdatePassword)
@@ -68,6 +68,24 @@ func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
+}
+
+func (h Handler) GetUser(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	ctx := r.Context()
+
+	user, err := h.svc.GetUser(ctx, id)
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to fetch user")
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	response := convertGetUserByIDRowToResponse(user)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(response)
 }
 
 func (h Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
@@ -122,6 +140,49 @@ func (h Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 // Convert ListUsersRow to UserResponse
 func convertListUsersRowToResponse(user models.ListUsersRow) UserResponse {
+	response := UserResponse{
+		ID:        user.ID.String(),
+		Username:  user.Username,
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
+		Role:      user.Role,
+	}
+
+	// Handle nullable fields
+	if user.CountyID.Valid {
+		response.CountyID = &user.CountyID.Int32
+	}
+	if user.PhoneNumber.Valid {
+		response.PhoneNumber = &user.PhoneNumber.String
+	}
+	if user.EmployeeID.Valid {
+		response.EmployeeID = &user.EmployeeID.String
+	}
+	if user.Department.Valid {
+		response.Department = &user.Department.String
+	}
+	if user.IsActive.Valid {
+		response.IsActive = &user.IsActive.Bool
+	}
+	if user.LastLogin.Valid {
+		lastLogin := user.LastLogin.Time.Format("2006-01-02T15:04:05Z")
+		response.LastLogin = &lastLogin
+	}
+	if user.CreatedAt.Valid {
+		createdAt := user.CreatedAt.Time.Format("2006-01-02T15:04:05Z")
+		response.CreatedAt = &createdAt
+	}
+	if user.UpdatedAt.Valid {
+		updatedAt := user.UpdatedAt.Time.Format("2006-01-02T15:04:05Z")
+		response.UpdatedAt = &updatedAt
+	}
+
+	return response
+}
+
+// Convert GetUserByIDRow to UserResponse
+func convertGetUserByIDRowToResponse(user models.GetUserByIDRow) UserResponse {
 	response := UserResponse{
 		ID:        user.ID.String(),
 		Username:  user.Username,

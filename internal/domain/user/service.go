@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/sangkips/revenue-system/internal/domain/user/models"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -85,6 +86,59 @@ func (s *Service) GetUser(ctx context.Context, id string) (models.GetUserByIDRow
 	return s.repo.GetUserByID(ctx, id)
 }
 
+func (s *Service) UpdateUser(ctx context.Context, id string, req UpdateUserRequest) error {
+	userID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+
+	params := models.UpdateUserParams{
+		ID: userID,
+	}
+
+	if req.Email != nil {
+		params.UpdateEmail = true
+		params.Email = *req.Email
+	}
+
+	if req.FirstName != nil {
+		params.UpdateFirstName = true
+		params.FirstName = *req.FirstName
+	}
+
+	if req.LastName != nil {
+		params.UpdateLastName = true
+		params.LastName = *req.LastName
+	}
+
+	if req.PhoneNumber != nil {
+		params.UpdatePhoneNumber = true
+		params.PhoneNumber = sql.NullString{String: *req.PhoneNumber, Valid: *req.PhoneNumber != ""}
+	}
+
+	if req.Role != nil {
+		params.UpdateRole = true
+		params.Role = *req.Role
+	}
+
+	if req.EmployeeID != nil {
+		params.UpdateEmployeeID = true
+		params.EmployeeID = sql.NullString{String: *req.EmployeeID, Valid: *req.EmployeeID != ""}
+	}
+
+	if req.Department != nil {
+		params.UpdateDepartment = true
+		params.Department = sql.NullString{String: *req.Department, Valid: *req.Department != ""}
+	}
+
+	if req.IsActive != nil {
+		params.UpdateIsActive = true
+		params.IsActive = sql.NullBool{Bool: *req.IsActive, Valid: true}
+	}
+
+	return s.repo.UpdateUser(ctx, params)
+}
+
 type CreateUserRequest struct {
 	CountyID    *int32 `json:"county_id,omitempty"`
 	Username    string `json:"username"`
@@ -99,12 +153,12 @@ type CreateUserRequest struct {
 }
 
 type UpdateUserRequest struct {
-	Email       string `json:"email"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	PhoneNumber string `json:"phone_number"`
-	Role        string `json:"role"`
-	EmployeeID  string `json:"employee_id"`
-	Department  string `json:"department"`
-	IsActive    bool   `json:"is_active"`
+	Email       *string `json:"email,omitempty"`
+	FirstName   *string `json:"first_name,omitempty"`
+	LastName    *string `json:"last_name,omitempty"`
+	PhoneNumber *string `json:"phone_number,omitempty"`
+	Role        *string `json:"role,omitempty"`
+	EmployeeID  *string `json:"employee_id,omitempty"`
+	Department  *string `json:"department,omitempty"`
+	IsActive    *bool   `json:"is_active,omitempty"`
 }

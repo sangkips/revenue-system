@@ -13,6 +13,7 @@ type Repository interface {
 	ListUsers(ctx context.Context, params models.ListUsersParams) ([]models.ListUsersRow, error)
 	ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error)
 	GetUserByID(ctx context.Context, id string) (models.GetUserByIDRow, error)
+	UpdateUser(ctx context.Context, params models.UpdateUserParams) error
 }
 
 type repository struct {
@@ -45,4 +46,8 @@ func (r *repository) GetUserByID(ctx context.Context, id string) (models.GetUser
 		return models.GetUserByIDRow{}, err
 	}
 	return r.q.GetUserByID(ctx, parsedID)
+}
+
+func (r *repository) UpdateUser(ctx context.Context, params models.UpdateUserParams) error {
+	return r.q.UpdateUser(ctx, params)
 }

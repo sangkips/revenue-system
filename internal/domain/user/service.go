@@ -139,6 +139,10 @@ func (s *Service) UpdateUser(ctx context.Context, id string, req UpdateUserReque
 	return s.repo.UpdateUser(ctx, params)
 }
 
+func(s *Service) DeleteUser(ctx context.Context, id string) error {
+	return s.repo.DeleteUser(ctx, id)
+}
+
 type CreateUserRequest struct {
 	CountyID    *int32 `json:"county_id,omitempty"`
 	Username    string `json:"username"`

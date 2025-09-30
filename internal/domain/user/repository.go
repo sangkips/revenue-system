@@ -14,6 +14,7 @@ type Repository interface {
 	ListAllUsers(ctx context.Context, params models.ListAllUsersParams) ([]models.ListAllUsersRow, error)
 	GetUserByID(ctx context.Context, id string) (models.GetUserByIDRow, error)
 	UpdateUser(ctx context.Context, params models.UpdateUserParams) error
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -50,4 +51,12 @@ func (r *repository) GetUserByID(ctx context.Context, id string) (models.GetUser
 
 func (r *repository) UpdateUser(ctx context.Context, params models.UpdateUserParams) error {
 	return r.q.UpdateUser(ctx, params)
+}
+
+func (r *repository) DeleteUser(ctx context.Context, id string) error {
+	parsedID, err := uuid.Parse(id)
+	if err != nil {
+		return nil
+	}
+	return r.q.DeleteUser(ctx, parsedID)
 }

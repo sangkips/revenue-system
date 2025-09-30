@@ -44,7 +44,7 @@ func (h Handler) RegisterUserRoutes(r chi.Router) {
 	r.Get("/{id}", h.GetUser)
 	r.Get("/", h.ListUsers)
 	r.Patch("/{id}", h.UpdateUser)
-	// r.Delete("/{id}", h.DeleteUser)
+	r.Delete("/{id}", h.DeleteUser)
 }
 
 func (h Handler) CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -285,5 +285,16 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
 
+func (h Handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	ctx := r.Context()
+
+	if err := h.svc.DeleteUser(ctx, id); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

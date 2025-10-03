@@ -94,7 +94,7 @@ func (h Handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	offset, _ := strconv.ParseInt(offsetStr, 10, 32)
 
 	if limit == 0 {
-		limit = 30
+		limit = 10
 	}
 
 	ctx := r.Context()
@@ -275,7 +275,7 @@ func (h Handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 
-	if err := h.svc.UpdateUser(ctx,id, req); err != nil {
+	if err := h.svc.UpdateUser(ctx, id, req); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

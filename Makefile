@@ -10,5 +10,7 @@ logs:
 run:
 	docker compose up
 
+user:
+	go test ./internal/domain/user -v
 
 

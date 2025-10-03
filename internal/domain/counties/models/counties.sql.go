@@ -107,19 +107,40 @@ func (q *Queries) ListCounties(ctx context.Context, arg ListCountiesParams) ([]C
 	return items, nil
 }
 
-const updateCounty = `-- name: UpdateCounty :exec
+const updateCounty = `-- name: UpdateCounty :one
 UPDATE counties
-SET name = $1, treasury_account = $2, updated_at = CURRENT_TIMESTAMP
-WHERE id = $3
+SET
+    name = CASE WHEN $1::bool THEN $2 ELSE name END,
+    treasury_account = CASE WHEN $3::bool THEN $4 ELSE treasury_account END,
+    updated_at = CURRENT_TIMESTAMP
+WHERE id = $5
+RETURNING id, name, code, treasury_account, created_at, updated_at
 `
 
 type UpdateCountyParams struct {
-	Name            string         `json:"name"`
-	TreasuryAccount sql.NullString `json:"treasury_account"`
-	ID              int32          `json:"id"`
+	UpdateName            bool           `json:"update_name"`
+	Name                  string         `json:"name"`
+	UpdateTreasuryAccount bool           `json:"update_treasury_account"`
+	TreasuryAccount       sql.NullString `json:"treasury_account"`
+	ID                    int32          `json:"id"`
 }
 
-func (q *Queries) UpdateCounty(ctx context.Context, arg UpdateCountyParams) error {
-	_, err := q.db.ExecContext(ctx, updateCounty, arg.Name, arg.TreasuryAccount, arg.ID)
-	return err
+func (q *Queries) UpdateCounty(ctx context.Context, arg UpdateCountyParams) (County, error) {
+	row := q.db.QueryRowContext(ctx, updateCounty,
+		arg.UpdateName,
+		arg.Name,
+		arg.UpdateTreasuryAccount,
+		arg.TreasuryAccount,
+		arg.ID,
+	)
+	var i County
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Code,
+		&i.TreasuryAccount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

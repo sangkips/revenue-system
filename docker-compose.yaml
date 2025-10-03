@@ -10,6 +10,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  test_db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: test_county_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+
   api:
     build: .
     ports:
@@ -20,6 +31,8 @@ services:
       DB_URL: postgres://user:password@db:5432/county_db?sslmode=disable
       JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
       PORT: 8080
+      TEST_DB_URL: postgres://test_user:test_password@test_db:5433/test_county_db?sslmode=disable
 
 volumes:
   postgres_data:
+  test_postgres_data:

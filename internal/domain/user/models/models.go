@@ -19,6 +19,20 @@ type County struct {
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
 }
 
+type Taxpayer struct {
+	ID           uuid.UUID      `json:"id"`
+	CountyID     int32          `json:"county_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
 type User struct {
 	ID           uuid.UUID      `json:"id"`
 	CountyID     sql.NullInt32  `json:"county_id"`

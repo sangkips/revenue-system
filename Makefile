@@ -10,6 +10,9 @@ logs:
 run:
 	docker compose up
 
+generate:
+	sqlc generate
+
 user:
 	go test ./internal/domain/user -v
 

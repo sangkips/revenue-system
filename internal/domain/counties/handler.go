@@ -105,7 +105,7 @@ func (h *Handler) UpdateCounty(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	county, err := h.svc.UpdateCounty(ctx, int32(id), req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 

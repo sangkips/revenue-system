@@ -12,6 +12,7 @@ import (
 	"github.com/sangkips/revenue-system/internal/config"
 	"github.com/sangkips/revenue-system/internal/db"
 	"github.com/sangkips/revenue-system/internal/domain/counties"
+	"github.com/sangkips/revenue-system/internal/domain/revenue"
 	"github.com/sangkips/revenue-system/internal/domain/taxpayers"
 	"github.com/sangkips/revenue-system/internal/domain/user"
 	"github.com/sangkips/revenue-system/internal/middleware/auth"
@@ -44,6 +45,12 @@ func main() {
 	r.Route("/taxpayers", func(r chi.Router) {
 		r.Use(auth.JWTAuth(cfg.JWTSecret))
 		taxpayerHandler.RegisterTaxpayerRoutes(r)
+	})
+
+	revenueHandler := revenue.NewHandler(sqlDB)
+	r.Route("/revenues", func(r chi.Router) {
+		r.Use(auth.JWTAuth(cfg.JWTSecret))
+		revenueHandler.RegisterRevenueRoutes(r)
 	})
 
 	authService := auth.NewAuthService(user.NewRepository(sqlDB), cfg.JWTSecret)

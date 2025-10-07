@@ -6,6 +6,7 @@ package models
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -15,6 +16,18 @@ type County struct {
 	Name            string         `json:"name"`
 	Code            string         `json:"code"`
 	TreasuryAccount sql.NullString `json:"treasury_account"`
+	CreatedAt       sql.NullTime   `json:"created_at"`
+	UpdatedAt       sql.NullTime   `json:"updated_at"`
+}
+
+type Revenue struct {
+	ID              uuid.UUID      `json:"id"`
+	TaxpayerID      uuid.UUID      `json:"taxpayer_id"`
+	CountyID        int32          `json:"county_id"`
+	Amount          string         `json:"amount"`
+	RevenueType     string         `json:"revenue_type"`
+	TransactionDate time.Time      `json:"transaction_date"`
+	Description     sql.NullString `json:"description"`
 	CreatedAt       sql.NullTime   `json:"created_at"`
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
 }

@@ -11,6 +11,35 @@ import (
 	"github.com/google/uuid"
 )
 
+type Assessment struct {
+	ID               uuid.UUID     `json:"id"`
+	CountyID         int32         `json:"county_id"`
+	TaxpayerID       uuid.UUID     `json:"taxpayer_id"`
+	RevenueID        uuid.NullUUID `json:"revenue_id"`
+	AssessmentNumber string        `json:"assessment_number"`
+	AssessmentType   string        `json:"assessment_type"`
+	FinancialYear    string        `json:"financial_year"`
+	BaseAmount       string        `json:"base_amount"`
+	CalculatedAmount string        `json:"calculated_amount"`
+	TotalAmount      string        `json:"total_amount"`
+	Status           string        `json:"status"`
+	DueDate          time.Time     `json:"due_date"`
+	AssessedBy       uuid.NullUUID `json:"assessed_by"`
+	AssessedDate     time.Time     `json:"assessed_date"`
+	CreatedAt        sql.NullTime  `json:"created_at"`
+	UpdatedAt        sql.NullTime  `json:"updated_at"`
+}
+
+type AssessmentItem struct {
+	ID              uuid.UUID      `json:"id"`
+	AssessmentID    uuid.UUID      `json:"assessment_id"`
+	ItemDescription string         `json:"item_description"`
+	Quantity        sql.NullString `json:"quantity"`
+	UnitAmount      string         `json:"unit_amount"`
+	TotalAmount     string         `json:"total_amount"`
+	CreatedAt       sql.NullTime   `json:"created_at"`
+}
+
 type County struct {
 	ID              int32          `json:"id"`
 	Name            string         `json:"name"`

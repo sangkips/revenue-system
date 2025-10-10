@@ -38,15 +38,16 @@ sql:
       emit_json_tags: true
       emit_interface: true
 
-# - engine: "postgresql"
-#   queries: "internal/domains/assessment/queries"
-#   schema: "migrations"
-#   gen:
-#     go:
-#       package: "models"
-#       out: "internal/domains/assessment/models"
-#       emit_json_tags: true
-#       emit_interface: true
+- engine: "postgresql"
+  queries: "internal/domain/assessment/queries"
+  schema: "migrations"
+  gen:
+    go:
+      package: "models"
+      out: "internal/domain/assessment/models"
+      emit_json_tags: true
+      emit_interface: true
+
 # - engine: "postgresql"
 #   queries: "internal/domains/payment/queries"
 #   schema: "migrations"

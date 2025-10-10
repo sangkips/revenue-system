@@ -16,4 +16,3 @@ generate:
 user:
 	go test ./internal/domain/user -v
 
-

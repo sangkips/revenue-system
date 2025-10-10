@@ -13,9 +13,10 @@ import (
 type Querier interface {
 	DeleteRevenue(ctx context.Context, id uuid.UUID) error
 	GetRevenueByID(ctx context.Context, id uuid.UUID) (Revenue, error)
-	InsertRevenue(ctx context.Context, arg InsertRevenueParams) error
+	InsertRevenue(ctx context.Context, arg InsertRevenueParams) (Revenue, error)
 	ListRevenues(ctx context.Context, arg ListRevenuesParams) ([]Revenue, error)
-	UpdateRevenue(ctx context.Context, arg UpdateRevenueParams) error
+	ListRevenuesByTaxpayerID(ctx context.Context, arg ListRevenuesByTaxpayerIDParams) ([]Revenue, error)
+	UpdateRevenue(ctx context.Context, arg UpdateRevenueParams) (Revenue, error)
 }
 
 var _ Querier = (*Queries)(nil)

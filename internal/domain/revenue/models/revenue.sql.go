@@ -46,7 +46,7 @@ func (q *Queries) GetRevenueByID(ctx context.Context, id uuid.UUID) (Revenue, er
 	return i, err
 }
 
-const insertRevenue = `-- name: InsertRevenue :exec
+const insertRevenue = `-- name: InsertRevenue :one
 INSERT INTO revenues (
     taxpayer_id, county_id, amount, revenue_type, transaction_date, description
 )
@@ -65,8 +65,8 @@ type InsertRevenueParams struct {
 	Description     sql.NullString `json:"description"`
 }
 
-func (q *Queries) InsertRevenue(ctx context.Context, arg InsertRevenueParams) error {
-	_, err := q.db.ExecContext(ctx, insertRevenue,
+func (q *Queries) InsertRevenue(ctx context.Context, arg InsertRevenueParams) (Revenue, error) {
+	row := q.db.QueryRowContext(ctx, insertRevenue,
 		arg.TaxpayerID,
 		arg.CountyID,
 		arg.Amount,
@@ -74,7 +74,19 @@ func (q *Queries) InsertRevenue(ctx context.Context, arg InsertRevenueParams) er
 		arg.TransactionDate,
 		arg.Description,
 	)
-	return err
+	var i Revenue
+	err := row.Scan(
+		&i.ID,
+		&i.TaxpayerID,
+		&i.CountyID,
+		&i.Amount,
+		&i.RevenueType,
+		&i.TransactionDate,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const listRevenues = `-- name: ListRevenues :many
@@ -125,33 +137,93 @@ func (q *Queries) ListRevenues(ctx context.Context, arg ListRevenuesParams) ([]R
 	return items, nil
 }
 
-const updateRevenue = `-- name: UpdateRevenue :exec
+const listRevenuesByTaxpayerID = `-- name: ListRevenuesByTaxpayerID :many
+SELECT id, taxpayer_id, county_id, amount, revenue_type, transaction_date, description,
+       created_at, updated_at
+FROM revenues
+WHERE taxpayer_id = $3
+ORDER BY transaction_date DESC
+LIMIT $1 OFFSET $2
+`
+
+type ListRevenuesByTaxpayerIDParams struct {
+	Limit      int32     `json:"limit"`
+	Offset     int32     `json:"offset"`
+	TaxpayerID uuid.UUID `json:"taxpayer_id"`
+}
+
+func (q *Queries) ListRevenuesByTaxpayerID(ctx context.Context, arg ListRevenuesByTaxpayerIDParams) ([]Revenue, error) {
+	rows, err := q.db.QueryContext(ctx, listRevenuesByTaxpayerID, arg.Limit, arg.Offset, arg.TaxpayerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Revenue
+	for rows.Next() {
+		var i Revenue
+		if err := rows.Scan(
+			&i.ID,
+			&i.TaxpayerID,
+			&i.CountyID,
+			&i.Amount,
+			&i.RevenueType,
+			&i.TransactionDate,
+			&i.Description,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateRevenue = `-- name: UpdateRevenue :one
 UPDATE revenues
-SET 
-    amount = $1,
-    revenue_type = $2,
-    transaction_date = $3,
-    description = $4,
+SET
+    amount = COALESCE($1, amount),
+    revenue_type = COALESCE($2, revenue_type),
+    transaction_date = COALESCE($3, transaction_date),
+    description = COALESCE($4, description),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $5
 RETURNING id, taxpayer_id, county_id, amount, revenue_type, transaction_date, description, created_at, updated_at
 `
 
 type UpdateRevenueParams struct {
-	Amount          string         `json:"amount"`
-	RevenueType     string         `json:"revenue_type"`
-	TransactionDate time.Time      `json:"transaction_date"`
+	Amount          sql.NullString `json:"amount"`
+	RevenueType     sql.NullString `json:"revenue_type"`
+	TransactionDate sql.NullTime   `json:"transaction_date"`
 	Description     sql.NullString `json:"description"`
 	ID              uuid.UUID      `json:"id"`
 }
 
-func (q *Queries) UpdateRevenue(ctx context.Context, arg UpdateRevenueParams) error {
-	_, err := q.db.ExecContext(ctx, updateRevenue,
+func (q *Queries) UpdateRevenue(ctx context.Context, arg UpdateRevenueParams) (Revenue, error) {
+	row := q.db.QueryRowContext(ctx, updateRevenue,
 		arg.Amount,
 		arg.RevenueType,
 		arg.TransactionDate,
 		arg.Description,
 		arg.ID,
 	)
-	return err
+	var i Revenue
+	err := row.Scan(
+		&i.ID,
+		&i.TaxpayerID,
+		&i.CountyID,
+		&i.Amount,
+		&i.RevenueType,
+		&i.TransactionDate,
+		&i.Description,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

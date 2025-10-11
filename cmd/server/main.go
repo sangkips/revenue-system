@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/sangkips/revenue-system/internal/config"
 	"github.com/sangkips/revenue-system/internal/db"
+	"github.com/sangkips/revenue-system/internal/domain/assessment"
 	"github.com/sangkips/revenue-system/internal/domain/counties"
 	"github.com/sangkips/revenue-system/internal/domain/revenue"
 	"github.com/sangkips/revenue-system/internal/domain/taxpayers"
@@ -51,6 +52,12 @@ func main() {
 	r.Route("/revenues", func(r chi.Router) {
 		r.Use(auth.JWTAuth(cfg.JWTSecret))
 		revenueHandler.RegisterRevenueRoutes(r)
+	})
+
+	assessmentHandler := assessment.NewHandler(sqlDB)
+	r.Route("/assessments", func(r chi.Router) {
+		r.Use(auth.JWTAuth(cfg.JWTSecret))
+		assessmentHandler.RegisterAssessmentRoutes(r)
 	})
 
 	authService := auth.NewAuthService(user.NewRepository(sqlDB), cfg.JWTSecret)

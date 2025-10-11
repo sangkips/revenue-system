@@ -14,13 +14,14 @@ type Querier interface {
 	DeleteAssessment(ctx context.Context, id uuid.UUID) error
 	DeleteAssessmentItem(ctx context.Context, id uuid.UUID) error
 	GetAssessmentByID(ctx context.Context, id uuid.UUID) (Assessment, error)
+	GetAssessmentItemByID(ctx context.Context, id uuid.UUID) (AssessmentItem, error)
 	// internal/domains/assessment/queries/assessment.sql
-	InsertAssessment(ctx context.Context, arg InsertAssessmentParams) error
+	InsertAssessment(ctx context.Context, arg InsertAssessmentParams) (Assessment, error)
 	// Assessment Items Queries
-	InsertAssessmentItem(ctx context.Context, arg InsertAssessmentItemParams) error
+	InsertAssessmentItem(ctx context.Context, arg InsertAssessmentItemParams) (AssessmentItem, error)
 	ListAssessmentItems(ctx context.Context, assessmentID uuid.UUID) ([]AssessmentItem, error)
 	ListAssessments(ctx context.Context, arg ListAssessmentsParams) ([]Assessment, error)
-	UpdateAssessment(ctx context.Context, arg UpdateAssessmentParams) error
+	UpdateAssessment(ctx context.Context, arg UpdateAssessmentParams) (Assessment, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -63,7 +63,28 @@ func (q *Queries) GetAssessmentByID(ctx context.Context, id uuid.UUID) (Assessme
 	return i, err
 }
 
-const insertAssessment = `-- name: InsertAssessment :exec
+const getAssessmentItemByID = `-- name: GetAssessmentItemByID :one
+SELECT id, assessment_id, item_description, quantity, unit_amount, total_amount, created_at
+FROM assessment_items
+WHERE id = $1
+`
+
+func (q *Queries) GetAssessmentItemByID(ctx context.Context, id uuid.UUID) (AssessmentItem, error) {
+	row := q.db.QueryRowContext(ctx, getAssessmentItemByID, id)
+	var i AssessmentItem
+	err := row.Scan(
+		&i.ID,
+		&i.AssessmentID,
+		&i.ItemDescription,
+		&i.Quantity,
+		&i.UnitAmount,
+		&i.TotalAmount,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const insertAssessment = `-- name: InsertAssessment :one
 INSERT INTO assessments (
     county_id, taxpayer_id, revenue_id, assessment_number, assessment_type,
     financial_year, base_amount, calculated_amount, total_amount,
@@ -74,6 +95,9 @@ VALUES (
     $6, $7, $8, $9,
     $10, $11, $12, $13
 )
+RETURNING id, county_id, taxpayer_id, revenue_id, assessment_number, assessment_type,
+    financial_year, base_amount, calculated_amount, total_amount, status, due_date,
+    assessed_by, assessed_date, created_at, updated_at
 `
 
 type InsertAssessmentParams struct {
@@ -93,8 +117,8 @@ type InsertAssessmentParams struct {
 }
 
 // internal/domains/assessment/queries/assessment.sql
-func (q *Queries) InsertAssessment(ctx context.Context, arg InsertAssessmentParams) error {
-	_, err := q.db.ExecContext(ctx, insertAssessment,
+func (q *Queries) InsertAssessment(ctx context.Context, arg InsertAssessmentParams) (Assessment, error) {
+	row := q.db.QueryRowContext(ctx, insertAssessment,
 		arg.CountyID,
 		arg.TaxpayerID,
 		arg.RevenueID,
@@ -109,16 +133,36 @@ func (q *Queries) InsertAssessment(ctx context.Context, arg InsertAssessmentPara
 		arg.AssessedBy,
 		arg.AssessedDate,
 	)
-	return err
+	var i Assessment
+	err := row.Scan(
+		&i.ID,
+		&i.CountyID,
+		&i.TaxpayerID,
+		&i.RevenueID,
+		&i.AssessmentNumber,
+		&i.AssessmentType,
+		&i.FinancialYear,
+		&i.BaseAmount,
+		&i.CalculatedAmount,
+		&i.TotalAmount,
+		&i.Status,
+		&i.DueDate,
+		&i.AssessedBy,
+		&i.AssessedDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
-const insertAssessmentItem = `-- name: InsertAssessmentItem :exec
+const insertAssessmentItem = `-- name: InsertAssessmentItem :one
 INSERT INTO assessment_items (
     assessment_id, item_description, quantity, unit_amount, total_amount
 )
 VALUES (
     $1, $2, $3, $4, $5
 )
+RETURNING id, assessment_id, item_description, quantity, unit_amount, total_amount, created_at
 `
 
 type InsertAssessmentItemParams struct {
@@ -130,15 +174,25 @@ type InsertAssessmentItemParams struct {
 }
 
 // Assessment Items Queries
-func (q *Queries) InsertAssessmentItem(ctx context.Context, arg InsertAssessmentItemParams) error {
-	_, err := q.db.ExecContext(ctx, insertAssessmentItem,
+func (q *Queries) InsertAssessmentItem(ctx context.Context, arg InsertAssessmentItemParams) (AssessmentItem, error) {
+	row := q.db.QueryRowContext(ctx, insertAssessmentItem,
 		arg.AssessmentID,
 		arg.ItemDescription,
 		arg.Quantity,
 		arg.UnitAmount,
 		arg.TotalAmount,
 	)
-	return err
+	var i AssessmentItem
+	err := row.Scan(
+		&i.ID,
+		&i.AssessmentID,
+		&i.ItemDescription,
+		&i.Quantity,
+		&i.UnitAmount,
+		&i.TotalAmount,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const listAssessmentItems = `-- name: ListAssessmentItems :many
@@ -235,9 +289,9 @@ func (q *Queries) ListAssessments(ctx context.Context, arg ListAssessmentsParams
 	return items, nil
 }
 
-const updateAssessment = `-- name: UpdateAssessment :exec
+const updateAssessment = `-- name: UpdateAssessment :one
 UPDATE assessments
-SET 
+SET
     base_amount = COALESCE($1, base_amount),
     calculated_amount = COALESCE($2, calculated_amount),
     total_amount = COALESCE($3, total_amount),
@@ -245,6 +299,9 @@ SET
     due_date = COALESCE($5, due_date),
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $6
+RETURNING id, county_id, taxpayer_id, revenue_id, assessment_number, assessment_type,
+    financial_year, base_amount, calculated_amount, total_amount, status, due_date,
+    assessed_by, assessed_date, created_at, updated_at
 `
 
 type UpdateAssessmentParams struct {
@@ -256,8 +313,8 @@ type UpdateAssessmentParams struct {
 	ID               uuid.UUID `json:"id"`
 }
 
-func (q *Queries) UpdateAssessment(ctx context.Context, arg UpdateAssessmentParams) error {
-	_, err := q.db.ExecContext(ctx, updateAssessment,
+func (q *Queries) UpdateAssessment(ctx context.Context, arg UpdateAssessmentParams) (Assessment, error) {
+	row := q.db.QueryRowContext(ctx, updateAssessment,
 		arg.BaseAmount,
 		arg.CalculatedAmount,
 		arg.TotalAmount,
@@ -265,5 +322,24 @@ func (q *Queries) UpdateAssessment(ctx context.Context, arg UpdateAssessmentPara
 		arg.DueDate,
 		arg.ID,
 	)
-	return err
+	var i Assessment
+	err := row.Scan(
+		&i.ID,
+		&i.CountyID,
+		&i.TaxpayerID,
+		&i.RevenueID,
+		&i.AssessmentNumber,
+		&i.AssessmentType,
+		&i.FinancialYear,
+		&i.BaseAmount,
+		&i.CalculatedAmount,
+		&i.TotalAmount,
+		&i.Status,
+		&i.DueDate,
+		&i.AssessedBy,
+		&i.AssessedDate,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

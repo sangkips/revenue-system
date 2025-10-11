@@ -16,3 +16,5 @@ generate:
 user:
 	go test ./internal/domain/user -v
 
+migrate:
+	PGPASSWORD=password psql -h localhost -p 5434 -U user -d county_db -f migrations/006_create_assessment_table.sql

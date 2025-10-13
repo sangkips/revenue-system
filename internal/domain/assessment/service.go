@@ -123,19 +123,13 @@ func (s *Service) UpdateAssessment(ctx context.Context, id string, req UpdateAss
 		return models.Assessment{}, err
 	}
 
-	// Get current assessment to use existing values for fields not being updated
-	current, err := s.repo.GetAssessmentByID(ctx, assessmentID.String())
-	if err != nil {
-		return models.Assessment{}, err
-	}
-
 	params := models.UpdateAssessmentParams{
 		ID:               assessmentID,
-		BaseAmount:       current.BaseAmount,
-		CalculatedAmount: current.CalculatedAmount,
-		TotalAmount:      current.TotalAmount,
-		Status:           current.Status,
-		DueDate:          current.DueDate,
+		BaseAmount:       "",
+		CalculatedAmount: "",
+		TotalAmount:      "",
+		Status:           "",
+		DueDate:          time.Date(1970, 1, 1, 0, 0, 0, 0, time.UTC),
 	}
 
 	if req.BaseAmount != nil {

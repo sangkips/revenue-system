@@ -13,6 +13,7 @@ import (
 	"github.com/sangkips/revenue-system/internal/db"
 	"github.com/sangkips/revenue-system/internal/domain/assessment"
 	"github.com/sangkips/revenue-system/internal/domain/counties"
+	"github.com/sangkips/revenue-system/internal/domain/payments"
 	"github.com/sangkips/revenue-system/internal/domain/revenue"
 	"github.com/sangkips/revenue-system/internal/domain/taxpayers"
 	"github.com/sangkips/revenue-system/internal/domain/user"
@@ -58,6 +59,12 @@ func main() {
 	r.Route("/assessments", func(r chi.Router) {
 		r.Use(auth.JWTAuth(cfg.JWTSecret))
 		assessmentHandler.RegisterAssessmentRoutes(r)
+	})
+
+	paymentHandler := payments.NewHandler(sqlDB)
+	r.Route("/payments", func(r chi.Router) {
+		r.Use(auth.JWTAuth(cfg.JWTSecret))
+		paymentHandler.RegisterPaymentsRoutes(r)
 	})
 
 	authService := auth.NewAuthService(user.NewRepository(sqlDB), cfg.JWTSecret)

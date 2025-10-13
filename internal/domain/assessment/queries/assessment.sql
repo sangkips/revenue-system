@@ -33,13 +33,13 @@ LIMIT $1 OFFSET $2;
 -- name: UpdateAssessment :one
 UPDATE assessments
 SET
-    base_amount = COALESCE(NULLIF($1, ''), base_amount),
-    calculated_amount = COALESCE(NULLIF($2, ''), calculated_amount),
-    total_amount = COALESCE(NULLIF($3, ''), total_amount),
-    status = COALESCE(NULLIF($4, ''), status),
-    due_date = COALESCE(NULLIF($5, '1970-01-01T00:00:00Z'::timestamptz), due_date),
+    base_amount = CASE WHEN @base_amount::text = '' THEN base_amount ELSE @base_amount::decimal END,
+    calculated_amount = CASE WHEN @calculated_amount::text = '' THEN calculated_amount ELSE @calculated_amount::decimal END,
+    total_amount = CASE WHEN @total_amount::text = '' THEN total_amount ELSE @total_amount::decimal END,
+    status = CASE WHEN @status = '' THEN status ELSE @status END,
+    due_date = CASE WHEN @due_date = '1970-01-01T00:00:00Z'::timestamptz THEN due_date ELSE @due_date END,
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $6
+WHERE id = @id
 RETURNING id, county_id, taxpayer_id, revenue_id, assessment_number, assessment_type,
     financial_year, base_amount, calculated_amount, total_amount, status, due_date,
     assessed_by, assessed_date, created_at, updated_at;

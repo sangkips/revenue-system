@@ -49,6 +49,25 @@ type County struct {
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
 }
 
+type Payment struct {
+	ID                    uuid.UUID      `json:"id"`
+	CountyID              int32          `json:"county_id"`
+	TaxpayerID            uuid.UUID      `json:"taxpayer_id"`
+	AssessmentID          uuid.NullUUID  `json:"assessment_id"`
+	PaymentNumber         string         `json:"payment_number"`
+	Amount                string         `json:"amount"`
+	PaymentMethod         string         `json:"payment_method"`
+	PaymentChannel        sql.NullString `json:"payment_channel"`
+	ExternalTransactionID sql.NullString `json:"external_transaction_id"`
+	PayerPhoneNumber      sql.NullString `json:"payer_phone_number"`
+	PayerName             sql.NullString `json:"payer_name"`
+	PaymentDate           sql.NullTime   `json:"payment_date"`
+	Status                string         `json:"status"`
+	CollectedBy           uuid.NullUUID  `json:"collected_by"`
+	CreatedAt             sql.NullTime   `json:"created_at"`
+	UpdatedAt             sql.NullTime   `json:"updated_at"`
+}
+
 type Revenue struct {
 	ID              uuid.UUID      `json:"id"`
 	TaxpayerID      uuid.UUID      `json:"taxpayer_id"`

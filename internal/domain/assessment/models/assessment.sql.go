@@ -292,11 +292,11 @@ func (q *Queries) ListAssessments(ctx context.Context, arg ListAssessmentsParams
 const updateAssessment = `-- name: UpdateAssessment :one
 UPDATE assessments
 SET
-    base_amount = COALESCE($1, base_amount),
-    calculated_amount = COALESCE($2, calculated_amount),
-    total_amount = COALESCE($3, total_amount),
-    status = COALESCE($4, status),
-    due_date = COALESCE($5, due_date),
+    base_amount = CASE WHEN $1::text = '' THEN base_amount ELSE $1::decimal END,
+    calculated_amount = CASE WHEN $2::text = '' THEN calculated_amount ELSE $2::decimal END,
+    total_amount = CASE WHEN $3::text = '' THEN total_amount ELSE $3::decimal END,
+    status = CASE WHEN $4 = '' THEN status ELSE $4 END,
+    due_date = CASE WHEN $5 = '1970-01-01T00:00:00Z'::timestamptz THEN due_date ELSE $5 END,
     updated_at = CURRENT_TIMESTAMP
 WHERE id = $6
 RETURNING id, county_id, taxpayer_id, revenue_id, assessment_number, assessment_type,
@@ -305,12 +305,12 @@ RETURNING id, county_id, taxpayer_id, revenue_id, assessment_number, assessment_
 `
 
 type UpdateAssessmentParams struct {
-	BaseAmount       string    `json:"base_amount"`
-	CalculatedAmount string    `json:"calculated_amount"`
-	TotalAmount      string    `json:"total_amount"`
-	Status           string    `json:"status"`
-	DueDate          time.Time `json:"due_date"`
-	ID               uuid.UUID `json:"id"`
+	BaseAmount       string      `json:"base_amount"`
+	CalculatedAmount string      `json:"calculated_amount"`
+	TotalAmount      string      `json:"total_amount"`
+	Status           interface{} `json:"status"`
+	DueDate          interface{} `json:"due_date"`
+	ID               uuid.UUID   `json:"id"`
 }
 
 func (q *Queries) UpdateAssessment(ctx context.Context, arg UpdateAssessmentParams) (Assessment, error) {

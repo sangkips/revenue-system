@@ -14,6 +14,18 @@ type Repository interface {
 	ListPaymentsByRevenueID(ctx context.Context, revenueID string) ([]models.Payment, error)
 	UpdatePayment(ctx context.Context, params models.UpdatePaymentParams) (models.Payment, error)
 	DeletePayment(ctx context.Context, id string) error
+
+	// Payment Allocations
+	CreatePaymentAllocation(ctx context.Context, allocation models.InsertPaymentAllocationParams) (models.PaymentAllocation, error)
+	ListPaymentAllocations(ctx context.Context, paymentID string) ([]models.PaymentAllocation, error)
+	DeletePaymentAllocation(ctx context.Context, id string) error
+
+	// Receipts
+	CreateReceipt(ctx context.Context, receipt models.InsertReceiptParams) error
+	GetReceiptByID(ctx context.Context, id string) (models.Receipt, error)
+	ListReceiptsByPayment(ctx context.Context, paymentID string) ([]models.Receipt, error)
+	UpdateReceipt(ctx context.Context, params models.UpdateReceiptParams) error
+	DeleteReceipt(ctx context.Context, id string) error
 }
 
 type repository struct {
@@ -62,4 +74,59 @@ func (r *repository) DeletePayment(ctx context.Context, id string) error {
 		return err
 	}
 	return r.q.DeletePayment(ctx, parsedID)
+}
+
+
+// Payment Allocations
+func (r *repository) CreatePaymentAllocation(ctx context.Context, allocation models.InsertPaymentAllocationParams) (models.PaymentAllocation, error) {
+	return r.q.InsertPaymentAllocation(ctx, allocation)
+}
+
+func (r *repository) ListPaymentAllocations(ctx context.Context, paymentID string) ([]models.PaymentAllocation, error) {
+	parseID, err := uuid.Parse(paymentID)
+	if err != nil {
+		return []models.PaymentAllocation{}, err
+	}
+	return r.q.ListPaymentAllocations(ctx, parseID)
+}
+
+func (r *repository) DeletePaymentAllocation(ctx context.Context, id string) error {
+	parseID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	return r.q.DeletePaymentAllocation(ctx, parseID)
+}
+
+// Receipts
+func (r *repository) CreateReceipt(ctx context.Context, receipt models.InsertReceiptParams) error {
+	return r.q.InsertReceipt(ctx, receipt)
+}
+
+func (r *repository) GetReceiptByID(ctx context.Context, id string) (models.Receipt, error) {
+	parseID, err := uuid.Parse(id)
+	if err != nil {
+		return models.Receipt{}, err
+	}
+	return r.q.GetReceiptByID(ctx, parseID)
+}
+
+func (r *repository) ListReceiptsByPayment(ctx context.Context, paymentID string) ([]models.Receipt, error) {
+	parsedID, err := uuid.Parse(paymentID)
+	if err != nil {
+		return nil, err
+	}
+	return r.q.ListReceiptsByPayment(ctx, parsedID)
+}
+
+func (r *repository) UpdateReceipt(ctx context.Context, params models.UpdateReceiptParams) error {
+	return r.q.UpdateReceipt(ctx, params)
+}
+
+func (r *repository) DeleteReceipt(ctx context.Context, id string) error {
+	parseID, err := uuid.Parse(id)
+	if err != nil {
+		return err
+	}
+	return r.q.DeleteReceipt(ctx, parseID)
 }

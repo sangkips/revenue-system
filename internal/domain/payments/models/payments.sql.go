@@ -21,10 +21,30 @@ func (q *Queries) DeletePayment(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const deletePaymentAllocation = `-- name: DeletePaymentAllocation :exec
+DELETE FROM payment_allocations WHERE id = $1
+`
+
+func (q *Queries) DeletePaymentAllocation(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deletePaymentAllocation, id)
+	return err
+}
+
+const deleteReceipt = `-- name: DeleteReceipt :exec
+DELETE FROM receipts WHERE id = $1
+`
+
+func (q *Queries) DeleteReceipt(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, deleteReceipt, id)
+	return err
+}
+
 const getPaymentByID = `-- name: GetPaymentByID :one
 SELECT id, county_id, taxpayer_id, assessment_id, payment_number, amount, payment_method,
-       payment_channel, external_transaction_id, payer_phone_number, payer_name,
-       payment_date, status, collected_by, created_at, updated_at
+       payment_channel, external_transaction_id, payer_phone_number, payer_name, payment_date,
+       status, collected_by, created_at, updated_at, mpesa_receipt_number, bank_reference,
+       cheque_number, failure_reason, collection_point, gps_coordinates, blockchain_hash,
+       block_number, reconciled, reconciliation_date, reconciled_by
 FROM payments
 WHERE id = $1
 `
@@ -49,6 +69,49 @@ func (q *Queries) GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, er
 		&i.CollectedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MpesaReceiptNumber,
+		&i.BankReference,
+		&i.ChequeNumber,
+		&i.FailureReason,
+		&i.CollectionPoint,
+		&i.GpsCoordinates,
+		&i.BlockchainHash,
+		&i.BlockNumber,
+		&i.Reconciled,
+		&i.ReconciliationDate,
+		&i.ReconciledBy,
+	)
+	return i, err
+}
+
+const getReceiptByID = `-- name: GetReceiptByID :one
+SELECT id, payment_id, receipt_number, receipt_type, pdf_file_path, pdf_file_size,
+       pdf_generated, sms_sent, sms_sent_at, email_sent, email_sent_at,
+       blockchain_hash, block_number, blockchain_verified, qr_code_data, created_at
+FROM receipts
+WHERE id = $1
+`
+
+func (q *Queries) GetReceiptByID(ctx context.Context, id uuid.UUID) (Receipt, error) {
+	row := q.db.QueryRowContext(ctx, getReceiptByID, id)
+	var i Receipt
+	err := row.Scan(
+		&i.ID,
+		&i.PaymentID,
+		&i.ReceiptNumber,
+		&i.ReceiptType,
+		&i.PdfFilePath,
+		&i.PdfFileSize,
+		&i.PdfGenerated,
+		&i.SmsSent,
+		&i.SmsSentAt,
+		&i.EmailSent,
+		&i.EmailSentAt,
+		&i.BlockchainHash,
+		&i.BlockNumber,
+		&i.BlockchainVerified,
+		&i.QrCodeData,
+		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -56,17 +119,25 @@ func (q *Queries) GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, er
 const insertPayment = `-- name: InsertPayment :one
 INSERT INTO payments (
     county_id, taxpayer_id, assessment_id, payment_number, amount, payment_method,
-    payment_channel, external_transaction_id, payer_phone_number, payer_name,
-    status, collected_by
+    payment_channel, external_transaction_id, mpesa_receipt_number, bank_reference,
+    cheque_number, payer_phone_number, payer_name, status, collected_by,
+    failure_reason, collection_point, gps_coordinates, blockchain_hash, block_number,
+    reconciled, reconciliation_date, reconciled_by
 )
 VALUES (
     $1, $2, $3, $4, $5, $6,
     $7, $8, $9, $10,
-    $11, $12
+    $11, $12, $13, $14, $15,
+    $16, $17, 
+    CASE WHEN $18 = '' THEN NULL ELSE $18::point END, 
+    $19, $20,
+    $21, $22, $23
 )
 RETURNING id, county_id, taxpayer_id, assessment_id, payment_number, amount, payment_method,
-    payment_channel, external_transaction_id, payer_phone_number, payer_name,
-    payment_date, status, collected_by, created_at, updated_at
+    payment_channel, external_transaction_id, payer_phone_number, payer_name, payment_date,
+    status, collected_by, created_at, updated_at, mpesa_receipt_number, bank_reference,
+    cheque_number, failure_reason, collection_point, gps_coordinates, blockchain_hash,
+    block_number, reconciled, reconciliation_date, reconciled_by
 `
 
 type InsertPaymentParams struct {
@@ -78,10 +149,21 @@ type InsertPaymentParams struct {
 	PaymentMethod         string         `json:"payment_method"`
 	PaymentChannel        sql.NullString `json:"payment_channel"`
 	ExternalTransactionID sql.NullString `json:"external_transaction_id"`
+	MpesaReceiptNumber    sql.NullString `json:"mpesa_receipt_number"`
+	BankReference         sql.NullString `json:"bank_reference"`
+	ChequeNumber          sql.NullString `json:"cheque_number"`
 	PayerPhoneNumber      sql.NullString `json:"payer_phone_number"`
 	PayerName             sql.NullString `json:"payer_name"`
 	Status                string         `json:"status"`
 	CollectedBy           uuid.NullUUID  `json:"collected_by"`
+	FailureReason         sql.NullString `json:"failure_reason"`
+	CollectionPoint       sql.NullString `json:"collection_point"`
+	GpsCoordinates        interface{}    `json:"gps_coordinates"`
+	BlockchainHash        sql.NullString `json:"blockchain_hash"`
+	BlockNumber           sql.NullInt64  `json:"block_number"`
+	Reconciled            sql.NullBool   `json:"reconciled"`
+	ReconciliationDate    sql.NullTime   `json:"reconciliation_date"`
+	ReconciledBy          uuid.NullUUID  `json:"reconciled_by"`
 }
 
 // internal/domains/payments/queries/payments.sql
@@ -95,10 +177,21 @@ func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) (P
 		arg.PaymentMethod,
 		arg.PaymentChannel,
 		arg.ExternalTransactionID,
+		arg.MpesaReceiptNumber,
+		arg.BankReference,
+		arg.ChequeNumber,
 		arg.PayerPhoneNumber,
 		arg.PayerName,
 		arg.Status,
 		arg.CollectedBy,
+		arg.FailureReason,
+		arg.CollectionPoint,
+		arg.GpsCoordinates,
+		arg.BlockchainHash,
+		arg.BlockNumber,
+		arg.Reconciled,
+		arg.ReconciliationDate,
+		arg.ReconciledBy,
 	)
 	var i Payment
 	err := row.Scan(
@@ -118,14 +211,152 @@ func (q *Queries) InsertPayment(ctx context.Context, arg InsertPaymentParams) (P
 		&i.CollectedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MpesaReceiptNumber,
+		&i.BankReference,
+		&i.ChequeNumber,
+		&i.FailureReason,
+		&i.CollectionPoint,
+		&i.GpsCoordinates,
+		&i.BlockchainHash,
+		&i.BlockNumber,
+		&i.Reconciled,
+		&i.ReconciliationDate,
+		&i.ReconciledBy,
 	)
 	return i, err
 }
 
+const insertPaymentAllocation = `-- name: InsertPaymentAllocation :one
+INSERT INTO payment_allocations (
+    payment_id, assessment_id, allocated_amount, allocation_type
+)
+VALUES (
+    $1, $2, $3, $4
+)
+RETURNING id, payment_id, assessment_id, allocated_amount, allocation_type, created_at
+`
+
+type InsertPaymentAllocationParams struct {
+	PaymentID       uuid.UUID      `json:"payment_id"`
+	AssessmentID    uuid.UUID      `json:"assessment_id"`
+	AllocatedAmount string         `json:"allocated_amount"`
+	AllocationType  sql.NullString `json:"allocation_type"`
+}
+
+// Payment Allocations Queries
+func (q *Queries) InsertPaymentAllocation(ctx context.Context, arg InsertPaymentAllocationParams) (PaymentAllocation, error) {
+	row := q.db.QueryRowContext(ctx, insertPaymentAllocation,
+		arg.PaymentID,
+		arg.AssessmentID,
+		arg.AllocatedAmount,
+		arg.AllocationType,
+	)
+	var i PaymentAllocation
+	err := row.Scan(
+		&i.ID,
+		&i.PaymentID,
+		&i.AssessmentID,
+		&i.AllocatedAmount,
+		&i.AllocationType,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const insertReceipt = `-- name: InsertReceipt :exec
+INSERT INTO receipts (
+    payment_id, receipt_number, receipt_type, pdf_file_path, pdf_file_size,
+    pdf_generated, sms_sent, sms_sent_at, email_sent, email_sent_at,
+    blockchain_hash, block_number, blockchain_verified, qr_code_data
+)
+VALUES (
+    $1, $2, $3, $4, $5,
+    $6, $7, $8, $9, $10,
+    $11, $12, $13, $14
+)
+`
+
+type InsertReceiptParams struct {
+	PaymentID          uuid.UUID      `json:"payment_id"`
+	ReceiptNumber      string         `json:"receipt_number"`
+	ReceiptType        sql.NullString `json:"receipt_type"`
+	PdfFilePath        sql.NullString `json:"pdf_file_path"`
+	PdfFileSize        sql.NullInt32  `json:"pdf_file_size"`
+	PdfGenerated       sql.NullBool   `json:"pdf_generated"`
+	SmsSent            sql.NullBool   `json:"sms_sent"`
+	SmsSentAt          sql.NullTime   `json:"sms_sent_at"`
+	EmailSent          sql.NullBool   `json:"email_sent"`
+	EmailSentAt        sql.NullTime   `json:"email_sent_at"`
+	BlockchainHash     string         `json:"blockchain_hash"`
+	BlockNumber        sql.NullInt64  `json:"block_number"`
+	BlockchainVerified sql.NullBool   `json:"blockchain_verified"`
+	QrCodeData         sql.NullString `json:"qr_code_data"`
+}
+
+// Receipts Queries
+func (q *Queries) InsertReceipt(ctx context.Context, arg InsertReceiptParams) error {
+	_, err := q.db.ExecContext(ctx, insertReceipt,
+		arg.PaymentID,
+		arg.ReceiptNumber,
+		arg.ReceiptType,
+		arg.PdfFilePath,
+		arg.PdfFileSize,
+		arg.PdfGenerated,
+		arg.SmsSent,
+		arg.SmsSentAt,
+		arg.EmailSent,
+		arg.EmailSentAt,
+		arg.BlockchainHash,
+		arg.BlockNumber,
+		arg.BlockchainVerified,
+		arg.QrCodeData,
+	)
+	return err
+}
+
+const listPaymentAllocations = `-- name: ListPaymentAllocations :many
+SELECT id, payment_id, assessment_id, allocated_amount, allocation_type, created_at
+FROM payment_allocations
+WHERE payment_id = $1
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListPaymentAllocations(ctx context.Context, paymentID uuid.UUID) ([]PaymentAllocation, error) {
+	rows, err := q.db.QueryContext(ctx, listPaymentAllocations, paymentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []PaymentAllocation
+	for rows.Next() {
+		var i PaymentAllocation
+		if err := rows.Scan(
+			&i.ID,
+			&i.PaymentID,
+			&i.AssessmentID,
+			&i.AllocatedAmount,
+			&i.AllocationType,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listPayments = `-- name: ListPayments :many
 SELECT id, county_id, taxpayer_id, assessment_id, payment_number, amount, payment_method,
-       payment_channel, external_transaction_id, payer_phone_number, payer_name,
-       payment_date, status, collected_by, created_at, updated_at
+       payment_channel, external_transaction_id, payer_phone_number, payer_name, payment_date,
+       status, collected_by, created_at, updated_at, mpesa_receipt_number, bank_reference,
+       cheque_number, failure_reason, collection_point, gps_coordinates, blockchain_hash,
+       block_number, reconciled, reconciliation_date, reconciled_by
 FROM payments
 WHERE county_id = $3
 ORDER BY payment_date DESC
@@ -164,6 +395,17 @@ func (q *Queries) ListPayments(ctx context.Context, arg ListPaymentsParams) ([]P
 			&i.CollectedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MpesaReceiptNumber,
+			&i.BankReference,
+			&i.ChequeNumber,
+			&i.FailureReason,
+			&i.CollectionPoint,
+			&i.GpsCoordinates,
+			&i.BlockchainHash,
+			&i.BlockNumber,
+			&i.Reconciled,
+			&i.ReconciliationDate,
+			&i.ReconciledBy,
 		); err != nil {
 			return nil, err
 		}
@@ -180,8 +422,10 @@ func (q *Queries) ListPayments(ctx context.Context, arg ListPaymentsParams) ([]P
 
 const listPaymentsByRevenueID = `-- name: ListPaymentsByRevenueID :many
 SELECT id, county_id, taxpayer_id, assessment_id, payment_number, amount, payment_method,
-       payment_channel, external_transaction_id, payer_phone_number, payer_name,
-       payment_date, status, collected_by, created_at, updated_at
+    payment_channel, external_transaction_id, payer_phone_number, payer_name, payment_date,
+    status, collected_by, created_at, updated_at, mpesa_receipt_number, bank_reference,
+    cheque_number, failure_reason, collection_point, gps_coordinates, blockchain_hash,
+    block_number, reconciled, reconciliation_date, reconciled_by
 FROM payments
 WHERE assessment_id = $1
 ORDER BY payment_date DESC
@@ -213,6 +457,66 @@ func (q *Queries) ListPaymentsByRevenueID(ctx context.Context, assessmentID uuid
 			&i.CollectedBy,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.MpesaReceiptNumber,
+			&i.BankReference,
+			&i.ChequeNumber,
+			&i.FailureReason,
+			&i.CollectionPoint,
+			&i.GpsCoordinates,
+			&i.BlockchainHash,
+			&i.BlockNumber,
+			&i.Reconciled,
+			&i.ReconciliationDate,
+			&i.ReconciledBy,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listReceiptsByPayment = `-- name: ListReceiptsByPayment :many
+SELECT id, payment_id, receipt_number, receipt_type, pdf_file_path, pdf_file_size,
+       pdf_generated, sms_sent, sms_sent_at, email_sent, email_sent_at,
+       blockchain_hash, block_number, blockchain_verified, qr_code_data, created_at
+FROM receipts
+WHERE payment_id = $1
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListReceiptsByPayment(ctx context.Context, paymentID uuid.UUID) ([]Receipt, error) {
+	rows, err := q.db.QueryContext(ctx, listReceiptsByPayment, paymentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Receipt
+	for rows.Next() {
+		var i Receipt
+		if err := rows.Scan(
+			&i.ID,
+			&i.PaymentID,
+			&i.ReceiptNumber,
+			&i.ReceiptType,
+			&i.PdfFilePath,
+			&i.PdfFileSize,
+			&i.PdfGenerated,
+			&i.SmsSent,
+			&i.SmsSentAt,
+			&i.EmailSent,
+			&i.EmailSentAt,
+			&i.BlockchainHash,
+			&i.BlockNumber,
+			&i.BlockchainVerified,
+			&i.QrCodeData,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -234,15 +538,32 @@ SET
     payment_method = COALESCE($2, payment_method),
     payment_channel = COALESCE($3, payment_channel),
     external_transaction_id = COALESCE($4, external_transaction_id),
-    payer_phone_number = COALESCE($5, payer_phone_number),
-    payer_name = COALESCE($6, payer_name),
-    status = COALESCE($7, status),
-    collected_by = COALESCE($8, collected_by),
+    mpesa_receipt_number = COALESCE($5, mpesa_receipt_number),
+    bank_reference = COALESCE($6, bank_reference),
+    cheque_number = COALESCE($7, cheque_number),
+    payer_phone_number = COALESCE($8, payer_phone_number),
+    payer_name = COALESCE($9, payer_name),
+    status = COALESCE($10, status),
+    failure_reason = COALESCE($11, failure_reason),
+    collected_by = COALESCE($12, collected_by),
+    collection_point = COALESCE($13, collection_point),
+    gps_coordinates = CASE 
+        WHEN $14 = '' THEN gps_coordinates 
+        WHEN $14 IS NULL THEN gps_coordinates
+        ELSE $14::point 
+    END,
+    blockchain_hash = COALESCE($15, blockchain_hash),
+    block_number = COALESCE($16, block_number),
+    reconciled = COALESCE($17, reconciled),
+    reconciliation_date = COALESCE($18, reconciliation_date),
+    reconciled_by = COALESCE($19, reconciled_by),
     updated_at = CURRENT_TIMESTAMP
-WHERE id = $9
+WHERE id = $20
 RETURNING id, county_id, taxpayer_id, assessment_id, payment_number, amount, payment_method,
-    payment_channel, external_transaction_id, payer_phone_number, payer_name,
-    payment_date, status, collected_by, created_at, updated_at
+    payment_channel, external_transaction_id, payer_phone_number, payer_name, payment_date,
+    status, collected_by, created_at, updated_at, mpesa_receipt_number, bank_reference,
+    cheque_number, failure_reason, collection_point, gps_coordinates, blockchain_hash,
+    block_number, reconciled, reconciliation_date, reconciled_by
 `
 
 type UpdatePaymentParams struct {
@@ -250,10 +571,21 @@ type UpdatePaymentParams struct {
 	PaymentMethod         string         `json:"payment_method"`
 	PaymentChannel        sql.NullString `json:"payment_channel"`
 	ExternalTransactionID sql.NullString `json:"external_transaction_id"`
+	MpesaReceiptNumber    sql.NullString `json:"mpesa_receipt_number"`
+	BankReference         sql.NullString `json:"bank_reference"`
+	ChequeNumber          sql.NullString `json:"cheque_number"`
 	PayerPhoneNumber      sql.NullString `json:"payer_phone_number"`
 	PayerName             sql.NullString `json:"payer_name"`
 	Status                string         `json:"status"`
+	FailureReason         sql.NullString `json:"failure_reason"`
 	CollectedBy           uuid.NullUUID  `json:"collected_by"`
+	CollectionPoint       sql.NullString `json:"collection_point"`
+	GpsCoordinates        interface{}    `json:"gps_coordinates"`
+	BlockchainHash        sql.NullString `json:"blockchain_hash"`
+	BlockNumber           sql.NullInt64  `json:"block_number"`
+	Reconciled            sql.NullBool   `json:"reconciled"`
+	ReconciliationDate    sql.NullTime   `json:"reconciliation_date"`
+	ReconciledBy          uuid.NullUUID  `json:"reconciled_by"`
 	ID                    uuid.UUID      `json:"id"`
 }
 
@@ -263,10 +595,21 @@ func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (P
 		arg.PaymentMethod,
 		arg.PaymentChannel,
 		arg.ExternalTransactionID,
+		arg.MpesaReceiptNumber,
+		arg.BankReference,
+		arg.ChequeNumber,
 		arg.PayerPhoneNumber,
 		arg.PayerName,
 		arg.Status,
+		arg.FailureReason,
 		arg.CollectedBy,
+		arg.CollectionPoint,
+		arg.GpsCoordinates,
+		arg.BlockchainHash,
+		arg.BlockNumber,
+		arg.Reconciled,
+		arg.ReconciliationDate,
+		arg.ReconciledBy,
 		arg.ID,
 	)
 	var i Payment
@@ -287,6 +630,61 @@ func (q *Queries) UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (P
 		&i.CollectedBy,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.MpesaReceiptNumber,
+		&i.BankReference,
+		&i.ChequeNumber,
+		&i.FailureReason,
+		&i.CollectionPoint,
+		&i.GpsCoordinates,
+		&i.BlockchainHash,
+		&i.BlockNumber,
+		&i.Reconciled,
+		&i.ReconciliationDate,
+		&i.ReconciledBy,
 	)
 	return i, err
+}
+
+const updateReceipt = `-- name: UpdateReceipt :exec
+UPDATE receipts
+SET 
+    receipt_type = COALESCE($1, receipt_type),
+    pdf_file_path = COALESCE($2, pdf_file_path),
+    pdf_file_size = COALESCE($3, pdf_file_size),
+    pdf_generated = COALESCE($4, pdf_generated),
+    sms_sent = COALESCE($5, sms_sent),
+    sms_sent_at = COALESCE($6, sms_sent_at),
+    email_sent = COALESCE($7, email_sent),
+    email_sent_at = COALESCE($8, email_sent_at),
+    blockchain_verified = COALESCE($9, blockchain_verified)
+WHERE id = $10
+`
+
+type UpdateReceiptParams struct {
+	ReceiptType        sql.NullString `json:"receipt_type"`
+	PdfFilePath        sql.NullString `json:"pdf_file_path"`
+	PdfFileSize        sql.NullInt32  `json:"pdf_file_size"`
+	PdfGenerated       sql.NullBool   `json:"pdf_generated"`
+	SmsSent            sql.NullBool   `json:"sms_sent"`
+	SmsSentAt          sql.NullTime   `json:"sms_sent_at"`
+	EmailSent          sql.NullBool   `json:"email_sent"`
+	EmailSentAt        sql.NullTime   `json:"email_sent_at"`
+	BlockchainVerified sql.NullBool   `json:"blockchain_verified"`
+	ID                 uuid.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateReceipt(ctx context.Context, arg UpdateReceiptParams) error {
+	_, err := q.db.ExecContext(ctx, updateReceipt,
+		arg.ReceiptType,
+		arg.PdfFilePath,
+		arg.PdfFileSize,
+		arg.PdfGenerated,
+		arg.SmsSent,
+		arg.SmsSentAt,
+		arg.EmailSent,
+		arg.EmailSentAt,
+		arg.BlockchainVerified,
+		arg.ID,
+	)
+	return err
 }

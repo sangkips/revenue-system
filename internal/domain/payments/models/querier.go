@@ -12,12 +12,22 @@ import (
 
 type Querier interface {
 	DeletePayment(ctx context.Context, id uuid.UUID) error
+	DeletePaymentAllocation(ctx context.Context, id uuid.UUID) error
+	DeleteReceipt(ctx context.Context, id uuid.UUID) error
 	GetPaymentByID(ctx context.Context, id uuid.UUID) (Payment, error)
+	GetReceiptByID(ctx context.Context, id uuid.UUID) (Receipt, error)
 	// internal/domains/payments/queries/payments.sql
 	InsertPayment(ctx context.Context, arg InsertPaymentParams) (Payment, error)
+	// Payment Allocations Queries
+	InsertPaymentAllocation(ctx context.Context, arg InsertPaymentAllocationParams) (PaymentAllocation, error)
+	// Receipts Queries
+	InsertReceipt(ctx context.Context, arg InsertReceiptParams) error
+	ListPaymentAllocations(ctx context.Context, paymentID uuid.UUID) ([]PaymentAllocation, error)
 	ListPayments(ctx context.Context, arg ListPaymentsParams) ([]Payment, error)
 	ListPaymentsByRevenueID(ctx context.Context, assessmentID uuid.NullUUID) ([]Payment, error)
+	ListReceiptsByPayment(ctx context.Context, paymentID uuid.UUID) ([]Receipt, error)
 	UpdatePayment(ctx context.Context, arg UpdatePaymentParams) (Payment, error)
+	UpdateReceipt(ctx context.Context, arg UpdateReceiptParams) error
 }
 
 var _ Querier = (*Queries)(nil)

@@ -68,6 +68,10 @@ func (s *Service) CreateAssessment(ctx context.Context, req CreateAssessmentRequ
 		if err != nil {
 			return models.Assessment{}, err
 		}
+		assessedBy.Valid = true
+	} else {
+		assessedBy.UUID = uuid.MustParse(userID)
+		assessedBy.Valid = true
 	}
 
 	params := models.InsertAssessmentParams{
@@ -82,7 +86,7 @@ func (s *Service) CreateAssessment(ctx context.Context, req CreateAssessmentRequ
 		TotalAmount:      fmt.Sprintf("%.2f", req.TotalAmount),
 		Status:           status,
 		DueDate:          dueDate,
-		AssessedBy:       uuid.NullUUID{UUID: uuid.MustParse(userID), Valid: true},
+		AssessedBy:       assessedBy,
 		AssessedDate:     assessedDate,
 	}
 

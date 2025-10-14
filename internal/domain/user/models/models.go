@@ -66,6 +66,45 @@ type Payment struct {
 	CollectedBy           uuid.NullUUID  `json:"collected_by"`
 	CreatedAt             sql.NullTime   `json:"created_at"`
 	UpdatedAt             sql.NullTime   `json:"updated_at"`
+	MpesaReceiptNumber    sql.NullString `json:"mpesa_receipt_number"`
+	BankReference         sql.NullString `json:"bank_reference"`
+	ChequeNumber          sql.NullString `json:"cheque_number"`
+	FailureReason         sql.NullString `json:"failure_reason"`
+	CollectionPoint       sql.NullString `json:"collection_point"`
+	GpsCoordinates        interface{}    `json:"gps_coordinates"`
+	BlockchainHash        sql.NullString `json:"blockchain_hash"`
+	BlockNumber           sql.NullInt64  `json:"block_number"`
+	Reconciled            sql.NullBool   `json:"reconciled"`
+	ReconciliationDate    sql.NullTime   `json:"reconciliation_date"`
+	ReconciledBy          uuid.NullUUID  `json:"reconciled_by"`
+}
+
+type PaymentAllocation struct {
+	ID              uuid.UUID      `json:"id"`
+	PaymentID       uuid.UUID      `json:"payment_id"`
+	AssessmentID    uuid.UUID      `json:"assessment_id"`
+	AllocatedAmount string         `json:"allocated_amount"`
+	AllocationType  sql.NullString `json:"allocation_type"`
+	CreatedAt       sql.NullTime   `json:"created_at"`
+}
+
+type Receipt struct {
+	ID                 uuid.UUID      `json:"id"`
+	PaymentID          uuid.UUID      `json:"payment_id"`
+	ReceiptNumber      string         `json:"receipt_number"`
+	ReceiptType        sql.NullString `json:"receipt_type"`
+	PdfFilePath        sql.NullString `json:"pdf_file_path"`
+	PdfFileSize        sql.NullInt32  `json:"pdf_file_size"`
+	PdfGenerated       sql.NullBool   `json:"pdf_generated"`
+	SmsSent            sql.NullBool   `json:"sms_sent"`
+	SmsSentAt          sql.NullTime   `json:"sms_sent_at"`
+	EmailSent          sql.NullBool   `json:"email_sent"`
+	EmailSentAt        sql.NullTime   `json:"email_sent_at"`
+	BlockchainHash     string         `json:"blockchain_hash"`
+	BlockNumber        sql.NullInt64  `json:"block_number"`
+	BlockchainVerified sql.NullBool   `json:"blockchain_verified"`
+	QrCodeData         sql.NullString `json:"qr_code_data"`
+	CreatedAt          sql.NullTime   `json:"created_at"`
 }
 
 type Revenue struct {

@@ -12,11 +12,13 @@ import (
 
 type Querier interface {
 	DeleteTaxpayer(ctx context.Context, id uuid.UUID) error
-	GetTaxpayerByID(ctx context.Context, id uuid.UUID) (Taxpayer, error)
-	GetTaxpayerByNationalID(ctx context.Context, nationalID string) (Taxpayer, error)
-	InsertTaxpayer(ctx context.Context, arg InsertTaxpayerParams) (Taxpayer, error)
-	ListTaxpayers(ctx context.Context, arg ListTaxpayersParams) ([]Taxpayer, error)
-	UpdateTaxpayer(ctx context.Context, arg UpdateTaxpayerParams) (Taxpayer, error)
+	GetFullProfileByUserID(ctx context.Context, userID uuid.UUID) (GetFullProfileByUserIDRow, error)
+	GetTaxpayerByID(ctx context.Context, id uuid.UUID) (GetTaxpayerByIDRow, error)
+	GetTaxpayerByNationalID(ctx context.Context, nationalID string) (GetTaxpayerByNationalIDRow, error)
+	GetTaxpayerByUserID(ctx context.Context, userID uuid.NullUUID) (GetTaxpayerByUserIDRow, error)
+	InsertTaxpayer(ctx context.Context, arg InsertTaxpayerParams) (InsertTaxpayerRow, error)
+	ListTaxpayers(ctx context.Context, arg ListTaxpayersParams) ([]ListTaxpayersRow, error)
+	UpdateTaxpayer(ctx context.Context, arg UpdateTaxpayerParams) (UpdateTaxpayerRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

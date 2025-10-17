@@ -131,6 +131,7 @@ type Taxpayer struct {
 	BusinessName sql.NullString `json:"business_name"`
 	CreatedAt    sql.NullTime   `json:"created_at"`
 	UpdatedAt    sql.NullTime   `json:"updated_at"`
+	UserID       uuid.NullUUID  `json:"user_id"`
 }
 
 type User struct {

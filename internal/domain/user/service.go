@@ -29,6 +29,7 @@ func (s *Service) CreateUser(ctx context.Context, req CreateUserRequest) (models
 		"department_head": true,
 		"collector":       true,
 		"auditor":         true,
+		"user":            true,
 	}
 	if !validRoles[req.Role] {
 		return models.User{}, errors.New("invalid role")

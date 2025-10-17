@@ -67,7 +67,8 @@ func main() {
 		paymentHandler.RegisterPaymentsRoutes(r)
 	})
 
-	authService := auth.NewAuthService(user.NewRepository(sqlDB), cfg.JWTSecret)
+	taxpayerRepo := taxpayers.NewRepository(sqlDB)
+	authService := auth.NewAuthServiceWithTaxpayer(user.NewRepository(sqlDB), taxpayerRepo, cfg.JWTSecret)
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/login", func(w http.ResponseWriter, r *http.Request) {
 			var req auth.LoginRequest

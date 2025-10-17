@@ -21,19 +21,90 @@ func (q *Queries) DeleteTaxpayer(ctx context.Context, id uuid.UUID) error {
 	return err
 }
 
+const getFullProfileByUserID = `-- name: GetFullProfileByUserID :one
+SELECT u.id, u.email as u_email, u.first_name as u_first_name, u.last_name as u_last_name, u.phone_number as u_phone,
+       u.role, u.created_at as u_created_at,
+       t.county_id, t.taxpayer_type, t.national_id, t.email as t_email, t.phone_number as t_phone,
+       t.first_name, t.last_name, t.business_name, t.created_at as t_created_at, t.updated_at
+FROM users u
+JOIN taxpayers t ON u.id = t.user_id
+WHERE u.id = $1 AND u.is_active = true
+`
+
+type GetFullProfileByUserIDRow struct {
+	ID           uuid.UUID      `json:"id"`
+	UEmail       string         `json:"u_email"`
+	UFirstName   string         `json:"u_first_name"`
+	ULastName    string         `json:"u_last_name"`
+	UPhone       sql.NullString `json:"u_phone"`
+	Role         string         `json:"role"`
+	UCreatedAt   sql.NullTime   `json:"u_created_at"`
+	CountyID     int32          `json:"county_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	TEmail       string         `json:"t_email"`
+	TPhone       sql.NullString `json:"t_phone"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	TCreatedAt   sql.NullTime   `json:"t_created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) GetFullProfileByUserID(ctx context.Context, userID uuid.UUID) (GetFullProfileByUserIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getFullProfileByUserID, userID)
+	var i GetFullProfileByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.UEmail,
+		&i.UFirstName,
+		&i.ULastName,
+		&i.UPhone,
+		&i.Role,
+		&i.UCreatedAt,
+		&i.CountyID,
+		&i.TaxpayerType,
+		&i.NationalID,
+		&i.TEmail,
+		&i.TPhone,
+		&i.FirstName,
+		&i.LastName,
+		&i.BusinessName,
+		&i.TCreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getTaxpayerByID = `-- name: GetTaxpayerByID :one
-SELECT id, county_id, taxpayer_type, national_id, email, phone_number,
+SELECT id, county_id, user_id, taxpayer_type, national_id, email, phone_number,
        first_name, last_name, business_name, created_at, updated_at
 FROM taxpayers
 WHERE id = $1
 `
 
-func (q *Queries) GetTaxpayerByID(ctx context.Context, id uuid.UUID) (Taxpayer, error) {
+type GetTaxpayerByIDRow struct {
+	ID           uuid.UUID      `json:"id"`
+	CountyID     int32          `json:"county_id"`
+	UserID       uuid.NullUUID  `json:"user_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) GetTaxpayerByID(ctx context.Context, id uuid.UUID) (GetTaxpayerByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getTaxpayerByID, id)
-	var i Taxpayer
+	var i GetTaxpayerByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.CountyID,
+		&i.UserID,
 		&i.TaxpayerType,
 		&i.NationalID,
 		&i.Email,
@@ -48,18 +119,76 @@ func (q *Queries) GetTaxpayerByID(ctx context.Context, id uuid.UUID) (Taxpayer, 
 }
 
 const getTaxpayerByNationalID = `-- name: GetTaxpayerByNationalID :one
-SELECT id, county_id, taxpayer_type, national_id, email, phone_number,
+SELECT id, county_id, user_id, taxpayer_type, national_id, email, phone_number,
        first_name, last_name, business_name, created_at, updated_at
 FROM taxpayers
 WHERE national_id = $1
 `
 
-func (q *Queries) GetTaxpayerByNationalID(ctx context.Context, nationalID string) (Taxpayer, error) {
+type GetTaxpayerByNationalIDRow struct {
+	ID           uuid.UUID      `json:"id"`
+	CountyID     int32          `json:"county_id"`
+	UserID       uuid.NullUUID  `json:"user_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) GetTaxpayerByNationalID(ctx context.Context, nationalID string) (GetTaxpayerByNationalIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getTaxpayerByNationalID, nationalID)
-	var i Taxpayer
+	var i GetTaxpayerByNationalIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.CountyID,
+		&i.UserID,
+		&i.TaxpayerType,
+		&i.NationalID,
+		&i.Email,
+		&i.PhoneNumber,
+		&i.FirstName,
+		&i.LastName,
+		&i.BusinessName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getTaxpayerByUserID = `-- name: GetTaxpayerByUserID :one
+SELECT id, county_id, user_id, taxpayer_type, national_id, email, phone_number,
+       first_name, last_name, business_name, created_at, updated_at
+FROM taxpayers
+WHERE user_id = $1
+`
+
+type GetTaxpayerByUserIDRow struct {
+	ID           uuid.UUID      `json:"id"`
+	CountyID     int32          `json:"county_id"`
+	UserID       uuid.NullUUID  `json:"user_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) GetTaxpayerByUserID(ctx context.Context, userID uuid.NullUUID) (GetTaxpayerByUserIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getTaxpayerByUserID, userID)
+	var i GetTaxpayerByUserIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.CountyID,
+		&i.UserID,
 		&i.TaxpayerType,
 		&i.NationalID,
 		&i.Email,
@@ -75,18 +204,19 @@ func (q *Queries) GetTaxpayerByNationalID(ctx context.Context, nationalID string
 
 const insertTaxpayer = `-- name: InsertTaxpayer :one
 INSERT INTO taxpayers (
-    county_id, taxpayer_type, national_id, email, phone_number, 
+    county_id, user_id, taxpayer_type, national_id, email, phone_number, 
     first_name, last_name, business_name
 )
 VALUES (
-    $1, $2, $3, $4, $5,
-    $6, $7, $8
+    $1, $2, $3, $4, $5, $6,
+    $7, $8, $9
 )
-RETURNING id, county_id, taxpayer_type, national_id, email, phone_number, first_name, last_name, business_name, created_at, updated_at
+RETURNING id, user_id, county_id, taxpayer_type, national_id, email, phone_number, first_name, last_name, business_name, created_at, updated_at
 `
 
 type InsertTaxpayerParams struct {
 	CountyID     int32          `json:"county_id"`
+	UserID       uuid.NullUUID  `json:"user_id"`
 	TaxpayerType string         `json:"taxpayer_type"`
 	NationalID   string         `json:"national_id"`
 	Email        string         `json:"email"`
@@ -96,9 +226,25 @@ type InsertTaxpayerParams struct {
 	BusinessName sql.NullString `json:"business_name"`
 }
 
-func (q *Queries) InsertTaxpayer(ctx context.Context, arg InsertTaxpayerParams) (Taxpayer, error) {
+type InsertTaxpayerRow struct {
+	ID           uuid.UUID      `json:"id"`
+	UserID       uuid.NullUUID  `json:"user_id"`
+	CountyID     int32          `json:"county_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) InsertTaxpayer(ctx context.Context, arg InsertTaxpayerParams) (InsertTaxpayerRow, error) {
 	row := q.db.QueryRowContext(ctx, insertTaxpayer,
 		arg.CountyID,
+		arg.UserID,
 		arg.TaxpayerType,
 		arg.NationalID,
 		arg.Email,
@@ -107,9 +253,10 @@ func (q *Queries) InsertTaxpayer(ctx context.Context, arg InsertTaxpayerParams) 
 		arg.LastName,
 		arg.BusinessName,
 	)
-	var i Taxpayer
+	var i InsertTaxpayerRow
 	err := row.Scan(
 		&i.ID,
+		&i.UserID,
 		&i.CountyID,
 		&i.TaxpayerType,
 		&i.NationalID,
@@ -125,7 +272,7 @@ func (q *Queries) InsertTaxpayer(ctx context.Context, arg InsertTaxpayerParams) 
 }
 
 const listTaxpayers = `-- name: ListTaxpayers :many
-SELECT id, county_id, taxpayer_type, national_id, email, phone_number,
+SELECT id, county_id, user_id, taxpayer_type, national_id, email, phone_number,
        first_name, last_name, business_name, created_at, updated_at
 FROM taxpayers
 WHERE county_id = $3
@@ -139,18 +286,34 @@ type ListTaxpayersParams struct {
 	CountyID int32 `json:"county_id"`
 }
 
-func (q *Queries) ListTaxpayers(ctx context.Context, arg ListTaxpayersParams) ([]Taxpayer, error) {
+type ListTaxpayersRow struct {
+	ID           uuid.UUID      `json:"id"`
+	CountyID     int32          `json:"county_id"`
+	UserID       uuid.NullUUID  `json:"user_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) ListTaxpayers(ctx context.Context, arg ListTaxpayersParams) ([]ListTaxpayersRow, error) {
 	rows, err := q.db.QueryContext(ctx, listTaxpayers, arg.Limit, arg.Offset, arg.CountyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Taxpayer
+	var items []ListTaxpayersRow
 	for rows.Next() {
-		var i Taxpayer
+		var i ListTaxpayersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.CountyID,
+			&i.UserID,
 			&i.TaxpayerType,
 			&i.NationalID,
 			&i.Email,
@@ -196,7 +359,21 @@ type UpdateTaxpayerParams struct {
 	ID           uuid.UUID      `json:"id"`
 }
 
-func (q *Queries) UpdateTaxpayer(ctx context.Context, arg UpdateTaxpayerParams) (Taxpayer, error) {
+type UpdateTaxpayerRow struct {
+	ID           uuid.UUID      `json:"id"`
+	CountyID     int32          `json:"county_id"`
+	TaxpayerType string         `json:"taxpayer_type"`
+	NationalID   string         `json:"national_id"`
+	Email        string         `json:"email"`
+	PhoneNumber  sql.NullString `json:"phone_number"`
+	FirstName    sql.NullString `json:"first_name"`
+	LastName     sql.NullString `json:"last_name"`
+	BusinessName sql.NullString `json:"business_name"`
+	CreatedAt    sql.NullTime   `json:"created_at"`
+	UpdatedAt    sql.NullTime   `json:"updated_at"`
+}
+
+func (q *Queries) UpdateTaxpayer(ctx context.Context, arg UpdateTaxpayerParams) (UpdateTaxpayerRow, error) {
 	row := q.db.QueryRowContext(ctx, updateTaxpayer,
 		arg.Email,
 		arg.PhoneNumber,
@@ -205,7 +382,7 @@ func (q *Queries) UpdateTaxpayer(ctx context.Context, arg UpdateTaxpayerParams) 
 		arg.BusinessName,
 		arg.ID,
 	)
-	var i Taxpayer
+	var i UpdateTaxpayerRow
 	err := row.Scan(
 		&i.ID,
 		&i.CountyID,

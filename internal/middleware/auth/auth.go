@@ -76,12 +76,17 @@ type RegisterRequest struct {
 }
 
 func (s AuthService) Register(ctx context.Context, req RegisterRequest) (models.User, error) {
-	if req.Email == "" || req.Password == "" || req.Role == "" {
+	if req.Role == "" {
+		req.Role = "user"
+	}
+	
+	if req.Email == "" || req.Password == "" {
 		return models.User{}, errors.New("required fields missing")
 	}
 
 	// Validate role
 	validRoles := map[string]bool{
+		"user":			   true,
 		"super_admin":     true,
 		"county_admin":    true,
 		"department_head": true,

@@ -51,6 +51,138 @@ func (q *Queries) CreateApplication(ctx context.Context, arg CreateApplicationPa
 	return i, err
 }
 
+const createApplicationAssessment = `-- name: CreateApplicationAssessment :exec
+INSERT INTO application_assessments (
+    application_id, assessment_id
+) VALUES (
+    $1, $2
+)
+`
+
+type CreateApplicationAssessmentParams struct {
+	ApplicationID uuid.UUID `json:"application_id"`
+	AssessmentID  uuid.UUID `json:"assessment_id"`
+}
+
+func (q *Queries) CreateApplicationAssessment(ctx context.Context, arg CreateApplicationAssessmentParams) error {
+	_, err := q.db.ExecContext(ctx, createApplicationAssessment, arg.ApplicationID, arg.AssessmentID)
+	return err
+}
+
+const createApplicationDocument = `-- name: CreateApplicationDocument :exec
+INSERT INTO application_documents (
+    id, application_id, file_path, file_type, uploaded_at
+) VALUES (
+    $1, $2, $3, $4, $5
+)
+`
+
+type CreateApplicationDocumentParams struct {
+	ID            uuid.UUID    `json:"id"`
+	ApplicationID uuid.UUID    `json:"application_id"`
+	FilePath      string       `json:"file_path"`
+	FileType      string       `json:"file_type"`
+	UploadedAt    sql.NullTime `json:"uploaded_at"`
+}
+
+func (q *Queries) CreateApplicationDocument(ctx context.Context, arg CreateApplicationDocumentParams) error {
+	_, err := q.db.ExecContext(ctx, createApplicationDocument,
+		arg.ID,
+		arg.ApplicationID,
+		arg.FilePath,
+		arg.FileType,
+		arg.UploadedAt,
+	)
+	return err
+}
+
+const createBuildingApproval = `-- name: CreateBuildingApproval :exec
+INSERT INTO building_approvals (
+    application_id, project_name, plot_parcel_number, project_type, estimated_project_cost, contact_email, contact_phone
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7
+)
+`
+
+type CreateBuildingApprovalParams struct {
+	ApplicationID        uuid.UUID      `json:"application_id"`
+	ProjectName          string         `json:"project_name"`
+	PlotParcelNumber     string         `json:"plot_parcel_number"`
+	ProjectType          string         `json:"project_type"`
+	EstimatedProjectCost string         `json:"estimated_project_cost"`
+	ContactEmail         sql.NullString `json:"contact_email"`
+	ContactPhone         sql.NullString `json:"contact_phone"`
+}
+
+func (q *Queries) CreateBuildingApproval(ctx context.Context, arg CreateBuildingApprovalParams) error {
+	_, err := q.db.ExecContext(ctx, createBuildingApproval,
+		arg.ApplicationID,
+		arg.ProjectName,
+		arg.PlotParcelNumber,
+		arg.ProjectType,
+		arg.EstimatedProjectCost,
+		arg.ContactEmail,
+		arg.ContactPhone,
+	)
+	return err
+}
+
+const createHealthCertificate = `-- name: CreateHealthCertificate :exec
+INSERT INTO health_certificates (
+    application_id, applicant_name, business_name, contact_email, contact_phone
+) VALUES (
+    $1, $2, $3, $4, $5
+)
+`
+
+type CreateHealthCertificateParams struct {
+	ApplicationID uuid.UUID      `json:"application_id"`
+	ApplicantName string         `json:"applicant_name"`
+	BusinessName  string         `json:"business_name"`
+	ContactEmail  sql.NullString `json:"contact_email"`
+	ContactPhone  sql.NullString `json:"contact_phone"`
+}
+
+func (q *Queries) CreateHealthCertificate(ctx context.Context, arg CreateHealthCertificateParams) error {
+	_, err := q.db.ExecContext(ctx, createHealthCertificate,
+		arg.ApplicationID,
+		arg.ApplicantName,
+		arg.BusinessName,
+		arg.ContactEmail,
+		arg.ContactPhone,
+	)
+	return err
+}
+
+const createSeasonalParkingTicket = `-- name: CreateSeasonalParkingTicket :exec
+INSERT INTO seasonal_parking_tickets (
+    application_id, vehicle_registration_number, preferred_parking_zone, duration, contact_email, contact_phone
+) VALUES (
+    $1, $2, $3, $4, $5, $6
+)
+`
+
+type CreateSeasonalParkingTicketParams struct {
+	ApplicationID             uuid.UUID      `json:"application_id"`
+	VehicleRegistrationNumber string         `json:"vehicle_registration_number"`
+	PreferredParkingZone      string         `json:"preferred_parking_zone"`
+	Duration                  string         `json:"duration"`
+	ContactEmail              sql.NullString `json:"contact_email"`
+	ContactPhone              sql.NullString `json:"contact_phone"`
+}
+
+func (q *Queries) CreateSeasonalParkingTicket(ctx context.Context, arg CreateSeasonalParkingTicketParams) error {
+	_, err := q.db.ExecContext(ctx, createSeasonalParkingTicket,
+		arg.ApplicationID,
+		arg.VehicleRegistrationNumber,
+		arg.PreferredParkingZone,
+		arg.Duration,
+		arg.ContactEmail,
+		arg.ContactPhone,
+	)
+	return err
+}
+
 const createSingleBusinessPermit = `-- name: CreateSingleBusinessPermit :exec
 INSERT INTO single_business_permits (
     application_id, business_name, kra_pin, business_type, business_location, number_of_employees

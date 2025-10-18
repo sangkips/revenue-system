@@ -12,6 +12,11 @@ import (
 
 type Querier interface {
 	CreateApplication(ctx context.Context, arg CreateApplicationParams) (Application, error)
+	CreateApplicationAssessment(ctx context.Context, arg CreateApplicationAssessmentParams) error
+	CreateApplicationDocument(ctx context.Context, arg CreateApplicationDocumentParams) error
+	CreateBuildingApproval(ctx context.Context, arg CreateBuildingApprovalParams) error
+	CreateHealthCertificate(ctx context.Context, arg CreateHealthCertificateParams) error
+	CreateSeasonalParkingTicket(ctx context.Context, arg CreateSeasonalParkingTicketParams) error
 	CreateSingleBusinessPermit(ctx context.Context, arg CreateSingleBusinessPermitParams) error
 	GetApplicationByID(ctx context.Context, id uuid.UUID) (GetApplicationByIDRow, error)
 	ListApplicationsByTaxpayer(ctx context.Context, taxpayerID uuid.UUID) ([]ListApplicationsByTaxpayerRow, error)

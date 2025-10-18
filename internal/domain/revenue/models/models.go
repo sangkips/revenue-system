@@ -11,6 +11,31 @@ import (
 	"github.com/google/uuid"
 )
 
+type Application struct {
+	ID             uuid.UUID      `json:"id"`
+	TaxpayerID     uuid.UUID      `json:"taxpayer_id"`
+	Type           string         `json:"type"`
+	Notes          sql.NullString `json:"notes"`
+	Status         string         `json:"status"`
+	SubmissionDate sql.NullTime   `json:"submission_date"`
+	ApprovalDate   sql.NullTime   `json:"approval_date"`
+	CreatedAt      sql.NullTime   `json:"created_at"`
+	UpdatedAt      sql.NullTime   `json:"updated_at"`
+}
+
+type ApplicationAssessment struct {
+	ApplicationID uuid.UUID `json:"application_id"`
+	AssessmentID  uuid.UUID `json:"assessment_id"`
+}
+
+type ApplicationDocument struct {
+	ID            uuid.UUID    `json:"id"`
+	ApplicationID uuid.UUID    `json:"application_id"`
+	FilePath      string       `json:"file_path"`
+	FileType      string       `json:"file_type"`
+	UploadedAt    sql.NullTime `json:"uploaded_at"`
+}
+
 type Assessment struct {
 	ID               uuid.UUID     `json:"id"`
 	CountyID         int32         `json:"county_id"`
@@ -40,6 +65,16 @@ type AssessmentItem struct {
 	CreatedAt       sql.NullTime   `json:"created_at"`
 }
 
+type BuildingApproval struct {
+	ApplicationID        uuid.UUID      `json:"application_id"`
+	ProjectName          string         `json:"project_name"`
+	PlotParcelNumber     string         `json:"plot_parcel_number"`
+	ProjectType          string         `json:"project_type"`
+	EstimatedProjectCost string         `json:"estimated_project_cost"`
+	ContactEmail         sql.NullString `json:"contact_email"`
+	ContactPhone         sql.NullString `json:"contact_phone"`
+}
+
 type County struct {
 	ID              int32          `json:"id"`
 	Name            string         `json:"name"`
@@ -47,6 +82,14 @@ type County struct {
 	TreasuryAccount sql.NullString `json:"treasury_account"`
 	CreatedAt       sql.NullTime   `json:"created_at"`
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
+}
+
+type HealthCertificate struct {
+	ApplicationID uuid.UUID      `json:"application_id"`
+	ApplicantName string         `json:"applicant_name"`
+	BusinessName  string         `json:"business_name"`
+	ContactEmail  sql.NullString `json:"contact_email"`
+	ContactPhone  sql.NullString `json:"contact_phone"`
 }
 
 type Payment struct {
@@ -117,6 +160,24 @@ type Revenue struct {
 	Description     sql.NullString `json:"description"`
 	CreatedAt       sql.NullTime   `json:"created_at"`
 	UpdatedAt       sql.NullTime   `json:"updated_at"`
+}
+
+type SeasonalParkingTicket struct {
+	ApplicationID             uuid.UUID      `json:"application_id"`
+	VehicleRegistrationNumber string         `json:"vehicle_registration_number"`
+	PreferredParkingZone      string         `json:"preferred_parking_zone"`
+	Duration                  string         `json:"duration"`
+	ContactEmail              sql.NullString `json:"contact_email"`
+	ContactPhone              sql.NullString `json:"contact_phone"`
+}
+
+type SingleBusinessPermit struct {
+	ApplicationID     uuid.UUID `json:"application_id"`
+	BusinessName      string    `json:"business_name"`
+	KraPin            string    `json:"kra_pin"`
+	BusinessType      string    `json:"business_type"`
+	BusinessLocation  string    `json:"business_location"`
+	NumberOfEmployees int32     `json:"number_of_employees"`
 }
 
 type Taxpayer struct {
